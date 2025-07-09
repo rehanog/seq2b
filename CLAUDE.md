@@ -53,7 +53,8 @@ Building a high-performance Logseq replacement in Go with focus on:
 ### Current Progress
 - [x] Initial project setup
 - [x] Step 1.1: Basic file reader
-- [ ] Step 1.2: Line parser with headers
+- [x] Step 1.2: Line parser with headers (with tests)
+- [ ] Step 1.3: Parse basic markdown (bold, italic, links)
 
 ## Next Tasks
 See PROJECT_PLAN.md for detailed task list and progress tracking.

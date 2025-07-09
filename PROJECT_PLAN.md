@@ -24,9 +24,10 @@
 - [ ] Basic error handling
 
 #### Step 1.2: Simple Line Parser
-- [ ] Parse file line by line
-- [ ] Identify headers (# Header)
-- [ ] Store in simple struct
+- [x] Parse file line by line
+- [x] Identify headers (# Header)
+- [x] Store in simple struct
+- [ ] Write unit tests for line parser
 
 #### Step 1.3: Basic Markdown Elements
 - [ ] Parse bold/italic text
@@ -149,8 +150,20 @@ type Reference struct {
 
 **Recommendation**: Start with Fyne for faster development, consider Gio later for performance optimization
 
+## Testing Strategy
+- Unit tests for each parsing function
+- Test files with various markdown edge cases
+- Benchmark tests for performance goals
+- Integration tests for full pipeline
+
+## Go Testing Conventions
+- Test files: `*_test.go` in same package
+- Test functions: `TestXxx(t *testing.T)`
+- Table-driven tests for multiple cases
+- Benchmark functions: `BenchmarkXxx(b *testing.B)`
+
 ## Next Steps
 1. Set up Go module structure
-2. Implement basic markdown parser
+2. Implement basic markdown parser with tests
 3. Create test suite with Logseq sample data
 4. Design storage schema
