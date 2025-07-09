@@ -12,7 +12,7 @@ const (
 	TypeEmpty LineType = iota
 	TypeHeader
 	TypeText
-	TypeList
+	TypeBlock // Changed from TypeList - represents a Logseq block
 )
 
 // Line represents a parsed line from the markdown file
@@ -52,13 +52,13 @@ func ParseLine(number int, line string) Line {
 		}
 	}
 	
-	// List item (starts with -)
+	// Block (starts with -)
 	if strings.HasPrefix(trimmed, "-") {
-		listText := strings.TrimSpace(trimmed[1:])
+		blockText := strings.TrimSpace(trimmed[1:])
 		return Line{
 			Number:  number,
-			Type:    TypeList,
-			Content: listText,
+			Type:    TypeBlock,
+			Content: blockText,
 		}
 	}
 	

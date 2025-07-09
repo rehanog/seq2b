@@ -48,17 +48,17 @@ func TestParseLine(t *testing.T) {
 			wantContent: "Spaced Header",
 			wantLevel:   3,
 		},
-		// List items
+		// Block items
 		{
-			name:        "simple list item",
+			name:        "simple block",
 			input:       "- Item one",
-			wantType:    TypeList,
+			wantType:    TypeBlock,
 			wantContent: "Item one",
 		},
 		{
-			name:        "list with extra spaces",
+			name:        "block with extra spaces",
 			input:       "  - Indented item  ",
-			wantType:    TypeList,
+			wantType:    TypeBlock,
 			wantContent: "Indented item",
 		},
 		// Regular text
