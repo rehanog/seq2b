@@ -37,5 +37,23 @@ Building a high-performance Logseq replacement in Go with focus on:
   /ui        - CLI and API
 ```
 
+## Commit Strategy
+
+### When to Commit
+1. After completing each numbered step (1.1, 1.2, etc.)
+2. Before major refactoring
+3. When switching between different parts of the codebase
+4. At natural stopping points in a work session
+
+### Commit Message Format
+- Step commits: "Step X.Y: Brief description"
+- Feature commits: "Add/Update/Fix: Feature description"
+- Refactor commits: "Refactor: What was changed"
+
+### Current Progress
+- [x] Initial project setup
+- [x] Step 1.1: Basic file reader
+- [ ] Step 1.2: Line parser with headers
+
 ## Next Tasks
 See PROJECT_PLAN.md for detailed task list and progress tracking.
