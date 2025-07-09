@@ -43,19 +43,28 @@
 - [x] Write unit tests for block structure
 
 #### Step 1.5: Backlinks
-- [ ] Detect [[page references]]
-- [ ] Build backlink index
-- [ ] Create bidirectional graph
-- [ ] Write unit tests for backlink system
+- [x] Detect [[page references]]
+- [x] Build backlink index
+- [x] Create bidirectional graph
+- [x] Write unit tests for backlink system
 
-#### Step 1.6: Advanced Features
-- [ ] Parse properties
-- [ ] Parse tags
-- [ ] Parse TODO states
+### Phase 2: Native GUI Development (MVP Priority)
+- [ ] Evaluate native GUI frameworks (Wails, Fyne, Gio)
+- [ ] Create basic window with file browser
+- [ ] Display parsed pages in simple list view
+- [ ] Show block structure in editor view
+- [ ] Implement basic editing capabilities
+- [ ] Add backlink navigation
+- [ ] Write GUI tests
+
+### Phase 3: Advanced Parsing Features (Deferred)
+- [ ] Parse properties (key:: value)
+- [ ] Parse tags (#tag)
+- [ ] Parse TODO states (TODO, DONE)
 - [ ] Implement file watcher
 - [ ] Write unit tests for advanced features
 
-### Phase 2: Persistent Storage Layer
+### Phase 4: Persistent Storage Layer
 - [ ] Design efficient storage format (BadgerDB/BoltDB)
 - [ ] Write unit tests for storage interface
 - [ ] Implement indexing for fast queries
@@ -65,7 +74,7 @@
 - [ ] Add write-ahead logging for data integrity
 - [ ] Write integration tests for storage pipeline
 
-### Phase 3: Git/JJ Sync System
+### Phase 5: Git/JJ Sync System
 - [ ] Implement git integration with go-git
 - [ ] Write unit tests for git operations
 - [ ] Add jujutsu (jj) support
@@ -75,7 +84,7 @@
 - [ ] Implement mobile sync protocol
 - [ ] Write integration tests for sync pipeline
 
-### Phase 4: Security Implementation
+### Phase 6: Security Implementation
 - [ ] Set up code signing for binaries
 - [ ] Write tests for signature verification
 - [ ] Design plugin verification system
@@ -85,7 +94,7 @@
 - [ ] Create capability-based permissions
 - [ ] Write unit tests for permission system
 
-### Phase 5: AI Integration
+### Phase 7: AI Integration
 - [ ] Design AI provider interface
 - [ ] Write unit tests for AI interface
 - [ ] Implement local LLM support (Ollama/llama.cpp)
@@ -95,19 +104,7 @@
 - [ ] Create AI-powered linking suggestions
 - [ ] Write integration tests for AI features
 
-### Phase 6: Native GUI Development
-- [ ] Evaluate native GUI frameworks (Wails, Fyne, Gio)
-- [ ] Write UI component tests
-- [ ] Design native UI/UX following platform guidelines
-- [ ] Write accessibility tests
-- [ ] Implement core editor view with native performance
-- [ ] Write UI interaction tests
-- [ ] Add native file browser and search
-- [ ] Write end-to-end GUI tests
-- [ ] Create platform-specific installers
-- [ ] Write installer validation tests
-
-### Phase 7: API & CLI
+### Phase 8: API & CLI
 - [ ] Create REST/gRPC API for extensions
 - [ ] Write API unit tests
 - [ ] Write API integration tests
