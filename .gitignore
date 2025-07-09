@@ -1,6 +1,8 @@
 # Binaries
 hello
 go-hello-world
+logseq-go
+logseq-gui
 *.exe
 *.dll
 *.so
