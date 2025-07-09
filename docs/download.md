@@ -42,11 +42,11 @@ title: Download
 
 ```bash
 # Clone the repository
-git clone https://github.com/rehan/logseq-go.git
-cd logseq-go
+git clone https://github.com/rehanog/seq2b.git
+cd seq2b
 
 # Build CLI tool
-go build -o logseq-cli cmd/logseq-go/main.go
+go build -o seq2b-cli cmd/seq2b/main.go
 
 # Build desktop app
 cd desktop/wails
@@ -88,12 +88,12 @@ If you only need the command-line tool:
 
 ```bash
 # Install directly with go
-go install github.com/rehan/logseq-go/cmd/logseq-go@latest
+go install github.com/rehanog/seq2b/cmd/seq2b@latest
 
 # Or download and build
-git clone https://github.com/rehan/logseq-go.git
-cd logseq-go
-go build -o logseq-cli cmd/logseq-go/main.go
+git clone https://github.com/rehanog/seq2b.git
+cd seq2b
+go build -o seq2b-cli cmd/seq2b/main.go
 ```
 
 ## System Requirements
@@ -113,17 +113,17 @@ After installation, verify everything is working:
 
 ```bash
 # Check CLI version
-./logseq-cli --version
+./seq2b-cli --version
 
 # Test with sample data
-./logseq-cli testdata/pages
+./seq2b-cli testdata/pages
 ```
 
 ## Updates
 
-Logseq Go checks for updates automatically (coming soon). You can also:
-- Watch the [GitHub repository](https://github.com/rehan/logseq-go) for releases
+Seq2B checks for updates automatically (coming soon). You can also:
+- Watch the [GitHub repository](https://github.com/rehanog/seq2b) for releases
 - Subscribe to the [RSS feed](/feed.xml)
-- Follow development in [Discussions](https://github.com/rehan/logseq-go/discussions)
+- Follow development in [Discussions](https://github.com/rehanog/seq2b/discussions)
 
 </div>

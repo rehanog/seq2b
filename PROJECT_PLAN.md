@@ -1,4 +1,4 @@
-# Logseq Replacement Project Plan
+# seq2b Project Plan
 
 ## Project Goals
 - **Performance**: Faster than existing solutions using Go

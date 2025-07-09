@@ -5,18 +5,18 @@ title: Home
 
 <section class="hero">
     <div class="container">
-        <h1>Logseq Go</h1>
+        <h1>seq2b</h1>
         <p class="tagline">High-performance knowledge management built with Go</p>
         <div class="hero-buttons">
             <a href="{{ '/download' | relative_url }}" class="btn btn-primary">Download Now</a>
-            <a href="https://github.com/rehan/logseq-go" class="btn btn-secondary">View on GitHub</a>
+            <a href="https://github.com/rehanog/seq2b" class="btn btn-secondary">View on GitHub</a>
         </div>
     </div>
 </section>
 
 <section class="features">
     <div class="container">
-        <h2>Why Logseq Go?</h2>
+        <h2>Why seq2b?</h2>
         <div class="feature-grid">
             <div class="feature-card">
                 <div class="feature-icon">🚀</div>
@@ -56,7 +56,7 @@ title: Home
     <div class="container">
         <h2>See It In Action</h2>
         <div style="text-align: center; margin: 2rem 0;">
-            <img src="{{ '/assets/images/screenshot.png' | relative_url }}" alt="Logseq Go Screenshot" style="max-width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+            <img src="{{ '/assets/images/screenshot.png' | relative_url }}" alt="Seq2B Screenshot" style="max-width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
         </div>
     </div>
 </section>
@@ -67,10 +67,10 @@ title: Home
         <div style="background-color: #f8f9fa; padding: 2rem; border-radius: 12px;">
             <h3>CLI Tool</h3>
             <pre><code># Parse a directory of markdown files
-go run cmd/logseq-go/main.go path/to/your/pages/
+go run cmd/seq2b/main.go path/to/your/pages/
 
 # See block structure, backlinks, and more
-./logseq-cli your-notes.md</code></pre>
+./seq2b-cli your-notes.md</code></pre>
             
             <h3>Desktop GUI</h3>
             <pre><code># Launch the desktop application

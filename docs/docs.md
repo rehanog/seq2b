@@ -22,11 +22,11 @@ go install github.com/wailsapp/wails/v2/cmd/wails@latest
 ### Clone and Build
 ```bash
 # Clone the repository
-git clone https://github.com/rehan/logseq-go.git
-cd logseq-go
+git clone https://github.com/rehanog/seq2b.git
+cd seq2b
 
 # Build CLI tool
-go build -o logseq-cli cmd/logseq-go/main.go
+go build -o seq2b-cli cmd/seq2b/main.go
 
 # Build desktop app
 cd desktop/wails
@@ -42,10 +42,10 @@ The CLI tool is perfect for automation, testing, and understanding your knowledg
 #### Basic Usage
 ```bash
 # Parse a single file
-./logseq-cli path/to/note.md
+./seq2b-cli path/to/note.md
 
 # Parse a directory
-./logseq-cli path/to/pages/
+./seq2b-cli path/to/pages/
 ```
 
 #### Output Includes
@@ -99,13 +99,13 @@ The desktop application provides a native, fast interface for navigating your kn
 ## Project Structure
 
 ```
-logseq-go/
+seq2b/
 ├── pkg/parser/          # Shared parsing library
 │   ├── parser.go       # Main parser logic
 │   ├── block.go        # Block structure
 │   ├── backlink.go     # Backlink indexing
 │   └── multi_file.go   # Directory parsing
-├── cmd/logseq-go/      # CLI application
+├── cmd/seq2b/      # CLI application
 │   └── main.go         # CLI entry point
 ├── desktop/wails/      # Desktop GUI
 │   ├── app.go          # Backend logic
@@ -118,7 +118,7 @@ logseq-go/
 
 ## Configuration
 
-Currently, Logseq Go works out of the box with sensible defaults. Configuration options are coming in future releases.
+Currently, Seq2B works out of the box with sensible defaults. Configuration options are coming in future releases.
 
 ### Planned Configuration
 - Custom keybindings
@@ -131,7 +131,7 @@ Currently, Logseq Go works out of the box with sensible defaults. Configuration 
 ### Parser Package
 
 ```go
-import "github.com/rehan/logseq-go/pkg/parser"
+import "github.com/rehanog/seq2b/pkg/parser"
 
 // Parse a single file
 result, err := parser.ParseFile(content)
@@ -180,7 +180,7 @@ $(go env GOPATH)/bin/wails build
 **Cannot find parser package**
 ```bash
 # Ensure you're in the project root
-cd /path/to/logseq-go
+cd /path/to/seq2b
 go mod tidy
 ```
 
@@ -191,8 +191,8 @@ go mod tidy
 
 ### Getting Help
 
-- [GitHub Issues](https://github.com/rehan/logseq-go/issues)
-- [Discussions](https://github.com/rehan/logseq-go/discussions)
+- [GitHub Issues](https://github.com/rehanog/seq2b/issues)
+- [Discussions](https://github.com/rehanog/seq2b/discussions)
 - Check existing issues before creating new ones
 
 </div>

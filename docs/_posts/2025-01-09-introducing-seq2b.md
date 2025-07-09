@@ -1,12 +1,12 @@
 ---
 layout: default
-title: "Introducing Logseq Go: A High-Performance Knowledge Management System"
+title: "Introducing seq2b: A High-Performance Knowledge Management System"
 date: 2025-01-09
 author: Rehan
 categories: announcement
 ---
 
-# Introducing Logseq Go: A High-Performance Knowledge Management System
+# Introducing seq2b: A High-Performance Knowledge Management System
 
 <div class="blog-post-meta">
   January 9, 2025 • Rehan
@@ -14,7 +14,7 @@ categories: announcement
 
 <div class="container" style="padding: 2rem 0;">
 
-I'm excited to announce **Logseq Go**, a new high-performance knowledge management system built from the ground up in Go. This project represents months of work solving real problems I encountered with existing tools.
+I'm excited to announce **seq2b**, a new high-performance knowledge management system built from the ground up in Go. This project represents months of work solving real problems I encountered with existing tools.
 
 ## The Journey
 
@@ -32,10 +32,10 @@ That's when I discovered [Wails](https://wails.io/), which combines the power of
 - Cross-platform compatibility
 - Small binary size
 
-## What Makes Logseq Go Special?
+## What Makes seq2b Special?
 
 ### 🚀 Performance First
-Written in Go, Logseq Go can parse thousands of markdown files in seconds. No more waiting for your knowledge base to load.
+Written in Go, seq2b can parse thousands of markdown files in seconds. No more waiting for your knowledge base to load.
 
 ### 🔗 Smart Bidirectional Linking
 Automatic backlink detection means you never lose track of connections between your ideas. The relationship graph builds itself as you write.
@@ -48,7 +48,7 @@ Proper block indentation with visual hierarchy helps you see the structure of yo
 
 ## Current Status
 
-Today, Logseq Go includes:
+Today, seq2b includes:
 - ✅ Full markdown parser with Logseq-compatible block structure
 - ✅ Native desktop GUI for macOS, Windows, and Linux
 - ✅ CLI tool for automation and scripting
@@ -73,18 +73,18 @@ The roadmap is ambitious but achievable:
 
 ## Open Source from Day One
 
-Logseq Go is MIT licensed and open source. Every line of code is available on [GitHub](https://github.com/rehan/logseq-go). I believe in building in public and welcome contributions from the community.
+seq2b is MIT licensed and open source. Every line of code is available on [GitHub](https://github.com/rehanog/seq2b). I believe in building in public and welcome contributions from the community.
 
 ## Try It Today
 
-You can download and try Logseq Go right now:
+You can download and try seq2b right now:
 
 ```bash
-git clone https://github.com/rehan/logseq-go.git
-cd logseq-go
+git clone https://github.com/rehanog/seq2b.git
+cd seq2b
 
 # Try the CLI
-go run cmd/logseq-go/main.go testdata/pages
+go run cmd/seq2b/main.go testdata/pages
 
 # Or launch the GUI
 cd desktop/wails
@@ -93,9 +93,9 @@ wails dev
 
 ## Join the Journey
 
-This is just the beginning. I'm building Logseq Go to be the knowledge management system I've always wanted, and I hope it can be that for you too.
+This is just the beginning. I'm building seq2b to be the knowledge management system I've always wanted, and I hope it can be that for you too.
 
-- Star the project on [GitHub](https://github.com/rehan/logseq-go)
+- Star the project on [GitHub](https://github.com/rehanog/seq2b)
 - Report issues or suggest features
 - Contribute code or documentation
 - Share your feedback and ideas
@@ -104,6 +104,6 @@ Together, we can build something amazing.
 
 ---
 
-*What features would you like to see in a knowledge management system? Let me know in the [discussions](https://github.com/rehan/logseq-go/discussions)!*
+*What features would you like to see in a knowledge management system? Let me know in the [discussions](https://github.com/rehanog/seq2b/discussions)!*
 
 </div>

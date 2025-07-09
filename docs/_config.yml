@@ -1,4 +1,4 @@
-title: Logseq Go
+title: seq2b
 description: A high-performance knowledge management system built in Go
 author: Rehan
 email: rehanog@gmail.com
@@ -20,7 +20,7 @@ header_pages:
   - download.md
 
 # Social links
-github_username: rehan
+github_username: rehanog
 twitter_username: 
 
 # Analytics (optional)

@@ -22,13 +22,13 @@ Building a high-performance Logseq replacement in Go with focus on:
 - AI: Provider-agnostic interface
 
 ## Commands to Run
-- Build: `go build -o logseq-go cmd/logseq-go/main.go`
+- Build: `go build -o seq2b cmd/seq2b/main.go`
 - Test: `go test ./...`
-- Run: `go run cmd/logseq-go/main.go [file]`
+- Run: `go run cmd/seq2b/main.go [file]`
 
 ## Project Structure
 ```
-/cmd/logseq-go     - Main application entry point
+/cmd/seq2b     - Main application entry point
 /internal
   /parser          - Markdown parsing logic
   /storage         - Persistence layer (future)

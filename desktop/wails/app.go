@@ -27,7 +27,7 @@ import (
 	"fmt"
 	"path/filepath"
 	
-	"github.com/rehan/logseq-go/pkg/parser"
+	"github.com/rehanog/seq2b/pkg/parser"
 )
 
 // App struct

@@ -1,13 +1,13 @@
-# Running Logseq Go
+# Running seq2b
 
-This document describes how to run the different versions of Logseq Go after the mobile-ready restructure.
+This document describes how to run the different versions of seq2b after the mobile-ready restructure.
 
 ## Directory Structure
 
 ```
-logseq-go/
+seq2b/
 ├── pkg/parser/              # 📦 Shared parsing library
-├── cmd/logseq-go/main.go   # 🖥️ CLI tool
+├── cmd/seq2b/main.go   # 🖥️ CLI tool
 ├── desktop/wails/          # 🖥️ Desktop app (Wails)
 ├── mobile/                 # 📱 Future mobile apps
 │   ├── ios/
@@ -22,7 +22,7 @@ The CLI tool is excellent for testing and debugging parser logic.
 ### Run CLI
 ```bash
 # From project root
-go run cmd/logseq-go/main.go testdata/pages
+go run cmd/seq2b/main.go testdata/pages
 ```
 
 ### CLI Output
@@ -34,10 +34,10 @@ go run cmd/logseq-go/main.go testdata/pages
 ### CLI Usage
 ```bash
 # Single file
-go run cmd/logseq-go/main.go testdata/pages/page-a.md
+go run cmd/seq2b/main.go testdata/pages/page-a.md
 
 # Directory
-go run cmd/logseq-go/main.go testdata/pages
+go run cmd/seq2b/main.go testdata/pages
 ```
 
 ## Desktop App (Wails)
@@ -68,7 +68,7 @@ cd desktop/wails
 $(go env GOPATH)/bin/wails build
 
 # Run the built application
-./build/bin/logseq-wails.app/Contents/MacOS/logseq-wails
+./build/bin/seq2b-wails.app/Contents/MacOS/seq2b-wails
 ```
 
 **Production Features:**
@@ -80,7 +80,7 @@ $(go env GOPATH)/bin/wails build
 ### Alternative Launch (macOS)
 ```bash
 # You can also double-click the .app bundle in Finder
-open ./build/bin/logseq-wails.app
+open ./build/bin/seq2b-wails.app
 ```
 
 ## Desktop App Features
@@ -115,7 +115,7 @@ $(go env GOPATH)/bin/wails dev
 ### Import Path Issues
 All code now uses the shared parser library:
 ```go
-import "github.com/rehan/logseq-go/pkg/parser"
+import "github.com/rehanog/seq2b/pkg/parser"
 ```
 
 ### Test Data Location

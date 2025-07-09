@@ -1,4 +1,4 @@
-# Logseq Go
+# seq2b
 
 A high-performance, cross-platform knowledge management system built in Go, inspired by Logseq. Features a native desktop GUI with proper block indentation, bidirectional linking, and a mobile-ready architecture.
 
@@ -35,11 +35,11 @@ A high-performance, cross-platform knowledge management system built in Go, insp
 
 ```bash
 # Clone the repository
-git clone https://github.com/rehan/logseq-go.git
-cd logseq-go
+git clone https://github.com/rehanog/seq2b.git
+cd seq2b
 
 # Run the CLI tool
-go run cmd/logseq-go/main.go testdata/pages
+go run cmd/seq2b/main.go testdata/pages
 
 # Run the desktop GUI
 cd desktop/wails
@@ -50,7 +50,7 @@ wails dev
 
 ```bash
 # Build CLI tool
-go build -o logseq-cli cmd/logseq-go/main.go
+go build -o seq2b-cli cmd/seq2b/main.go
 
 # Build desktop app
 cd desktop/wails
@@ -65,10 +65,10 @@ Perfect for testing and automation:
 
 ```bash
 # Parse a single file
-./logseq-cli path/to/file.md
+./seq2b-cli path/to/file.md
 
 # Parse a directory
-./logseq-cli path/to/pages/
+./seq2b-cli path/to/pages/
 
 # Output includes:
 # - Block structure and hierarchy
@@ -87,9 +87,9 @@ Perfect for testing and automation:
 ## 🏗️ Architecture
 
 ```
-logseq-go/
+seq2b/
 ├── pkg/parser/          # Shared parsing library
-├── cmd/logseq-go/      # CLI tool
+├── cmd/seq2b/          # CLI tool
 ├── desktop/wails/      # Desktop GUI
 ├── mobile/             # Future mobile apps
 │   ├── ios/
@@ -115,7 +115,7 @@ go test ./...
 ### Code Structure
 
 - `pkg/parser/`: Core parsing logic (shared across platforms)
-- `cmd/logseq-go/`: CLI application
+- `cmd/seq2b/`: CLI application
 - `desktop/wails/`: Desktop GUI application
 
 ### Contributing
@@ -135,9 +135,9 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 ## 🔗 Links
 
-- [Documentation](https://github.com/rehan/logseq-go/wiki)
-- [Issue Tracker](https://github.com/rehan/logseq-go/issues)
-- [Discussions](https://github.com/rehan/logseq-go/discussions)
+- [Documentation](https://github.com/rehanog/seq2b/wiki)
+- [Issue Tracker](https://github.com/rehanog/seq2b/issues)
+- [Discussions](https://github.com/rehanog/seq2b/discussions)
 
 ## 📝 License
 

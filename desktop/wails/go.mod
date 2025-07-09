@@ -1,13 +1,13 @@
-module github.com/rehan/logseq-go/desktop/wails
+module github.com/rehanog/seq2b/desktop/wails
 
 go 1.24.4
 
 require (
-	github.com/rehan/logseq-go v0.0.0-00010101000000-000000000000
+	github.com/rehanog/seq2b v0.0.0-00010101000000-000000000000
 	github.com/wailsapp/wails/v2 v2.10.2
 )
 
-replace github.com/rehan/logseq-go => ../..
+replace github.com/rehanog/seq2b => ../..
 
 require (
 	github.com/bep/debounce v1.2.1 // indirect
