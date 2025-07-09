@@ -19,77 +19,109 @@
 
 ### Phase 1: Core Markdown Parser & Data Model (Step-by-Step)
 #### Step 1.1: Basic File Reading
-- [ ] Read a plain text file into memory
-- [ ] Print contents to console
-- [ ] Basic error handling
+- [x] Read a plain text file into memory
+- [x] Print contents to console
+- [x] Basic error handling
+- [x] Write unit tests for file reading
 
 #### Step 1.2: Simple Line Parser
 - [x] Parse file line by line
 - [x] Identify headers (# Header)
 - [x] Store in simple struct
-- [ ] Write unit tests for line parser
+- [x] Write unit tests for line parser
 
 #### Step 1.3: Basic Markdown Elements
-- [ ] Parse bold/italic text
+- [ ] Parse bold/italic text (**bold**, *italic*)
 - [ ] Parse links [[page references]]
-- [ ] Parse bullet points
+- [ ] Parse bullet points with proper nesting
+- [ ] Write unit tests for markdown parsing
 
 #### Step 1.4: Block Structure
 - [ ] Understand Logseq's block concept
 - [ ] Parse nested blocks (indentation)
 - [ ] Create parent-child relationships
+- [ ] Write unit tests for block structure
 
 #### Step 1.5: Page Model
 - [ ] Design Page and Block structs
 - [ ] Parse multiple pages
 - [ ] Create in-memory storage
+- [ ] Write unit tests for page model
 
 #### Step 1.6: Backlinks
 - [ ] Detect [[page references]]
 - [ ] Build backlink index
 - [ ] Create bidirectional graph
+- [ ] Write unit tests for backlink system
 
 #### Step 1.7: Advanced Features
 - [ ] Parse properties
 - [ ] Parse tags
 - [ ] Parse TODO states
 - [ ] Implement file watcher
+- [ ] Write unit tests for advanced features
 
 ### Phase 2: Persistent Storage Layer
 - [ ] Design efficient storage format (BadgerDB/BoltDB)
+- [ ] Write unit tests for storage interface
 - [ ] Implement indexing for fast queries
+- [ ] Write unit tests for indexing
 - [ ] Create caching layer for performance
+- [ ] Write unit tests for caching
 - [ ] Add write-ahead logging for data integrity
+- [ ] Write integration tests for storage pipeline
 
 ### Phase 3: Git/JJ Sync System
 - [ ] Implement git integration with go-git
+- [ ] Write unit tests for git operations
 - [ ] Add jujutsu (jj) support
+- [ ] Write unit tests for jj operations
 - [ ] Create conflict resolution system
+- [ ] Write unit tests for conflict resolution
 - [ ] Implement mobile sync protocol
+- [ ] Write integration tests for sync pipeline
 
 ### Phase 4: Security Implementation
 - [ ] Set up code signing for binaries
+- [ ] Write tests for signature verification
 - [ ] Design plugin verification system
+- [ ] Write unit tests for plugin verification
 - [ ] Implement plugin sandboxing with WASM
+- [ ] Write security tests for WASM sandbox
 - [ ] Create capability-based permissions
+- [ ] Write unit tests for permission system
 
 ### Phase 5: AI Integration
 - [ ] Design AI provider interface
+- [ ] Write unit tests for AI interface
 - [ ] Implement local LLM support (Ollama/llama.cpp)
+- [ ] Write unit tests for LLM integration
 - [ ] Add semantic search with embeddings
+- [ ] Write unit tests for embedding system
 - [ ] Create AI-powered linking suggestions
+- [ ] Write integration tests for AI features
 
 ### Phase 6: Native GUI Development
 - [ ] Evaluate native GUI frameworks (Wails, Fyne, Gio)
+- [ ] Write UI component tests
 - [ ] Design native UI/UX following platform guidelines
+- [ ] Write accessibility tests
 - [ ] Implement core editor view with native performance
+- [ ] Write UI interaction tests
 - [ ] Add native file browser and search
+- [ ] Write end-to-end GUI tests
 - [ ] Create platform-specific installers
+- [ ] Write installer validation tests
 
 ### Phase 7: API & CLI
 - [ ] Create REST/gRPC API for extensions
+- [ ] Write API unit tests
+- [ ] Write API integration tests
 - [ ] Implement comprehensive CLI
+- [ ] Write CLI unit tests
+- [ ] Write CLI integration tests
 - [ ] Optional: Minimal web UI for remote access
+- [ ] Write web UI tests
 
 ## Technical Decisions
 
