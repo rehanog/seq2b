@@ -22,19 +22,20 @@ Building a high-performance Logseq replacement in Go with focus on:
 - AI: Provider-agnostic interface
 
 ## Commands to Run
-- Build: `go build`
+- Build: `go build -o logseq-go cmd/logseq-go/main.go`
 - Test: `go test ./...`
-- Run: `go run main.go`
+- Run: `go run cmd/logseq-go/main.go [file]`
 
 ## Project Structure
 ```
-/src
-  /parser    - Markdown parsing logic
-  /storage   - Persistence layer
-  /sync      - Git/JJ integration
-  /security  - Code signing, plugin verification
-  /ai        - AI provider interfaces
-  /ui        - CLI and API
+/cmd/logseq-go     - Main application entry point
+/internal
+  /parser          - Markdown parsing logic
+  /storage         - Persistence layer (future)
+  /sync            - Git/JJ integration (future)
+  /security        - Code signing, plugin verification (future)
+  /ai              - AI provider interfaces (future)
+/testdata          - Test markdown files
 ```
 
 ## Commit Strategy

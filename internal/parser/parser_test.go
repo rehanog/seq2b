@@ -1,4 +1,4 @@
-package main
+package parser
 
 import (
 	"testing"
@@ -78,18 +78,18 @@ func TestParseLine(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := parseLine(1, tt.input)
+			got := ParseLine(1, tt.input)
 			
 			if got.Type != tt.wantType {
-				t.Errorf("parseLine() type = %v, want %v", got.Type, tt.wantType)
+				t.Errorf("ParseLine() type = %v, want %v", got.Type, tt.wantType)
 			}
 			
 			if got.Content != tt.wantContent {
-				t.Errorf("parseLine() content = %q, want %q", got.Content, tt.wantContent)
+				t.Errorf("ParseLine() content = %q, want %q", got.Content, tt.wantContent)
 			}
 			
 			if got.Type == TypeHeader && got.HeaderLevel != tt.wantLevel {
-				t.Errorf("parseLine() header level = %v, want %v", got.HeaderLevel, tt.wantLevel)
+				t.Errorf("ParseLine() header level = %v, want %v", got.HeaderLevel, tt.wantLevel)
 			}
 		})
 	}
@@ -100,7 +100,7 @@ func TestLineNumbers(t *testing.T) {
 	testCases := []int{1, 5, 10, 100}
 	
 	for _, lineNum := range testCases {
-		result := parseLine(lineNum, "some text")
+		result := ParseLine(lineNum, "some text")
 		if result.Number != lineNum {
 			t.Errorf("Expected line number %d, got %d", lineNum, result.Number)
 		}
@@ -109,8 +109,8 @@ func TestLineNumbers(t *testing.T) {
 
 // Example of a benchmark test
 func BenchmarkParseLine(b *testing.B) {
-	// This runs the parseLine function b.N times
+	// This runs the ParseLine function b.N times
 	for i := 0; i < b.N; i++ {
-		parseLine(1, "## This is a header with **bold** text")
+		ParseLine(1, "## This is a header with **bold** text")
 	}
 }
