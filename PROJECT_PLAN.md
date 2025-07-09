@@ -48,35 +48,73 @@
 - [x] Create bidirectional graph
 - [x] Write unit tests for backlink system
 
-### Phase 2: Wails GUI Development (MVP Priority)
+### Phase 2: Wails GUI Development (MVP Priority) ✅ COMPLETED
 - [x] Evaluate native GUI frameworks (Wails, Fyne, Gio) - **Decision: Wails**
-- [ ] **2.1: Setup Wails Environment**
-  - [ ] Verify Wails CLI installation
-  - [ ] Check system dependencies (Node.js, etc.)
-  - [ ] Initialize Wails project structure
-- [ ] **2.2: Backend Migration**
-  - [ ] Create Wails app context (app.go)
-  - [ ] Migrate existing parser logic to Wails backend
-  - [ ] Expose Go functions to frontend:
-    - [ ] LoadDirectory(path string)
-    - [ ] GetPage(name string)
-    - [ ] GetPageList()
-    - [ ] GetBacklinks(name string)
-- [ ] **2.3: Frontend Development**
-  - [ ] Create HTML template for page display
-  - [ ] Add CSS for block indentation and styling
-  - [ ] Implement JavaScript for page navigation
-  - [ ] Add clickable [[page]] link handlers
-- [ ] **2.4: Core Features**
-  - [ ] Page navigation between links
-  - [ ] Back button functionality
-  - [ ] Backlinks display and navigation
-  - [ ] Command-line arguments support
-- [ ] **2.5: Polish & Testing**
-  - [ ] Improve styling and layout
-  - [ ] Test cross-platform compatibility
-  - [ ] Write frontend tests
-  - [ ] Performance optimization
+- [x] **2.1: Setup Wails Environment**
+  - [x] Verify Wails CLI installation
+  - [x] Check system dependencies (Node.js, etc.)
+  - [x] Initialize Wails project structure
+- [x] **2.2: Backend Migration**
+  - [x] Create Wails app context (app.go)
+  - [x] Migrate existing parser logic to Wails backend
+  - [x] Expose Go functions to frontend:
+    - [x] LoadDirectory(path string)
+    - [x] GetPage(name string)
+    - [x] GetPageList()
+    - [x] GetBacklinks(name string)
+- [x] **2.3: Frontend Development**
+  - [x] Create HTML template for page display
+  - [x] Add CSS for block indentation and styling (solved original Fyne issue!)
+  - [x] Implement JavaScript for page navigation
+  - [x] Add clickable [[page]] link handlers
+- [x] **2.4: Core Features**
+  - [x] Page navigation between links
+  - [x] Back button functionality with history
+  - [x] Backlinks sidebar with navigation
+  - [x] Native macOS application feel
+- [x] **2.5: Polish & Testing**
+  - [x] Improve styling and layout
+  - [x] Test compilation and functionality
+  - [x] Performance optimization (fast builds)
+  - [x] Add keyboard shortcuts (Escape = back)
+
+### Phase 2.6: Mobile-Ready Architecture ✅ COMPLETED
+- [x] Restructure for multi-platform development:
+  - [x] Move parser to `pkg/parser/` for shared library
+  - [x] Move Wails app to `desktop/wails/`
+  - [x] Create `mobile/ios/` and `mobile/android/` directories
+  - [x] Update all import paths to use shared parser
+  - [x] Remove dead-end Fyne GUI version
+- [x] Add comprehensive usage documentation (RUNNING.md)
+- [x] Verify CLI and desktop functionality
+
+### Phase 2.7: Open Source Publishing & Website
+- [x] Add MIT license to all source files
+- [x] Create main LICENSE file
+- [ ] Prepare repository for GitHub
+  - [ ] Add comprehensive README.md
+  - [ ] Create CONTRIBUTING.md
+  - [ ] Add issue templates
+  - [ ] Configure GitHub Actions for CI/CD
+- [ ] Create GitHub repository
+  - [ ] Push code to GitHub
+  - [ ] Set up branch protection
+  - [ ] Enable GitHub Issues
+  - [ ] Configure security alerts
+- [ ] Setup GitHub Pages for website
+  - [ ] Create docs/ directory
+  - [ ] Design landing page
+  - [ ] Add documentation
+  - [ ] Configure custom domain (optional)
+- [ ] Create project blog
+  - [ ] Setup Jekyll or Hugo
+  - [ ] Write announcement post
+  - [ ] Document journey from CLI to GUI
+  - [ ] Share architecture decisions
+- [ ] Community Setup
+  - [ ] Create Discord/Discussions
+  - [ ] Add Code of Conduct
+  - [ ] Set up sponsorship (GitHub Sponsors)
 
 ### Phase 3: Advanced Parsing Features (Deferred)
 - [ ] Parse properties (key:: value)
