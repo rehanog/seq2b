@@ -51,6 +51,8 @@ Building a high-performance Logseq replacement in Go with focus on:
 - Feature commits: "Add/Update/Fix: Feature description"
 - Refactor commits: "Refactor: What was changed"
 
+**IMPORTANT**: Do NOT add "Generated with Claude Code" or "Co-Authored-By: Claude" to commit messages. Keep them clean and professional.
+
 ### Current Progress
 - [x] Initial project setup
 - [x] Step 1.1: Basic file reader

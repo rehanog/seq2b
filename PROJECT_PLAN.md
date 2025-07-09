@@ -31,30 +31,24 @@
 - [x] Write unit tests for line parser
 
 #### Step 1.3: Basic Markdown Elements
-- [ ] Parse bold/italic text (**bold**, *italic*)
-- [ ] Parse links [[page references]]
-- [ ] Parse bullet points with proper nesting
-- [ ] Write unit tests for markdown parsing
+- [x] Parse bold/italic text (**bold**, *italic*)
+- [x] Parse links [[page references]]
+- [x] Parse bullet points with proper nesting
+- [x] Write unit tests for markdown parsing
 
 #### Step 1.4: Block Structure
-- [ ] Understand Logseq's block concept
-- [ ] Parse nested blocks (indentation)
-- [ ] Create parent-child relationships
-- [ ] Write unit tests for block structure
+- [x] Understand Logseq's block concept
+- [x] Parse nested blocks (indentation)
+- [x] Create parent-child relationships
+- [x] Write unit tests for block structure
 
-#### Step 1.5: Page Model
-- [ ] Design Page and Block structs
-- [ ] Parse multiple pages
-- [ ] Create in-memory storage
-- [ ] Write unit tests for page model
-
-#### Step 1.6: Backlinks
+#### Step 1.5: Backlinks
 - [ ] Detect [[page references]]
 - [ ] Build backlink index
 - [ ] Create bidirectional graph
 - [ ] Write unit tests for backlink system
 
-#### Step 1.7: Advanced Features
+#### Step 1.6: Advanced Features
 - [ ] Parse properties
 - [ ] Parse tags
 - [ ] Parse TODO states
