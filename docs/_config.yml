@@ -1,0 +1,40 @@
+title: Logseq Go
+description: A high-performance knowledge management system built in Go
+author: Rehan
+email: rehanog@gmail.com
+baseurl: "" # the subpath of your site, e.g. /blog
+url: "" # the base hostname & protocol for your site
+
+# Build settings
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# Navigation
+header_pages:
+  - index.md
+  - features.md
+  - docs.md
+  - blog.md
+  - download.md
+
+# Social links
+github_username: rehan
+twitter_username: 
+
+# Analytics (optional)
+google_analytics: 
+
+# Markdown settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
