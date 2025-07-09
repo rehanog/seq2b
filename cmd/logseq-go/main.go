@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 	
-	"github.com/rehan/logseq-go/internal/parser"
+	"github.com/rehan/logseq-go/pkg/parser"
 )
 
 func main() {

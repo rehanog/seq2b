@@ -1,0 +1,27 @@
+# Project Planning
+
+- Project goals
+  - Build a **fast** Logseq replacement
+  - Focus on [[performance]] and [[security]]
+  - Use [[Go]] as the main language
+    - Go is fast and has good concurrency
+    - Easy to deploy as single binary
+    - Strong typing helps with reliability
+- Technical requirements
+  - Native GUI with [[Fyne]] or [[Wails]]
+    - Must feel native on each platform
+    - Better than Electron performance
+  - Git/JJ sync for version control
+    - No data loss ever
+    - Conflict resolution
+  - AI integration
+    - Local LLM support with [[Ollama]]
+    - Smart linking suggestions
+    - Semantic search
+- Implementation phases
+  - Phase 1: Core parser (current)
+    - Line-by-line parsing ✅
+    - Markdown elements ✅  
+    - Block structure (in progress)
+  - Phase 2: Storage layer
+  - Phase 3: Sync system

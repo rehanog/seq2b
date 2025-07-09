@@ -8,6 +8,12 @@ logseq-gui
 *.so
 *.dylib
 
+# Wails build output
+desktop/wails/build/
+desktop/wails/frontend/node_modules/
+desktop/wails/frontend/dist/
+desktop/wails/test-build
+
 # Test binary
 *.test
 

@@ -37,6 +37,9 @@ go build -o logseq-gui cmd/gui/main.go
 - Clean, focused interface
 - Command-line arguments for page selection
 
-## Navigation (Coming Soon)
+## Navigation
 
-Next update will add clickable [[page links]] for navigation between pages.
+- **Clickable Links**: Click any [[page link]] to navigate to that page
+- **Back Button**: Use the "← Back" button in the top-left to go back
+- **Backlinks**: Click any backlink at the bottom to navigate to the referencing page
+- **Navigation History**: The back button maintains a history of visited pages

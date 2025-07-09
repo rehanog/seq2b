@@ -48,14 +48,35 @@
 - [x] Create bidirectional graph
 - [x] Write unit tests for backlink system
 
-### Phase 2: Native GUI Development (MVP Priority)
-- [ ] Evaluate native GUI frameworks (Wails, Fyne, Gio)
-- [ ] Create basic window with file browser
-- [ ] Display parsed pages in simple list view
-- [ ] Show block structure in editor view
-- [ ] Implement basic editing capabilities
-- [ ] Add backlink navigation
-- [ ] Write GUI tests
+### Phase 2: Wails GUI Development (MVP Priority)
+- [x] Evaluate native GUI frameworks (Wails, Fyne, Gio) - **Decision: Wails**
+- [ ] **2.1: Setup Wails Environment**
+  - [ ] Verify Wails CLI installation
+  - [ ] Check system dependencies (Node.js, etc.)
+  - [ ] Initialize Wails project structure
+- [ ] **2.2: Backend Migration**
+  - [ ] Create Wails app context (app.go)
+  - [ ] Migrate existing parser logic to Wails backend
+  - [ ] Expose Go functions to frontend:
+    - [ ] LoadDirectory(path string)
+    - [ ] GetPage(name string)
+    - [ ] GetPageList()
+    - [ ] GetBacklinks(name string)
+- [ ] **2.3: Frontend Development**
+  - [ ] Create HTML template for page display
+  - [ ] Add CSS for block indentation and styling
+  - [ ] Implement JavaScript for page navigation
+  - [ ] Add clickable [[page]] link handlers
+- [ ] **2.4: Core Features**
+  - [ ] Page navigation between links
+  - [ ] Back button functionality
+  - [ ] Backlinks display and navigation
+  - [ ] Command-line arguments support
+- [ ] **2.5: Polish & Testing**
+  - [ ] Improve styling and layout
+  - [ ] Test cross-platform compatibility
+  - [ ] Write frontend tests
+  - [ ] Performance optimization
 
 ### Phase 3: Advanced Parsing Features (Deferred)
 - [ ] Parse properties (key:: value)
