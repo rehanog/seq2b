@@ -107,79 +107,60 @@ func TestLineNumbers(t *testing.T) {
 	}
 }
 
-// Test markdown element parsing
-func TestMarkdownElements(t *testing.T) {
+// Test HTML rendering functionality
+func TestRenderToHTML(t *testing.T) {
 	tests := []struct {
-		name         string
-		input        string
-		wantBold     bool
-		wantItalic   bool
-		wantLink     string
+		name     string
+		input    string
+		expected string
 	}{
 		{
-			name:       "plain text",
-			input:      "Just plain text",
-			wantBold:   false,
-			wantItalic: false,
-			wantLink:   "",
+			name:     "plain text",
+			input:    "Just plain text",
+			expected: "Just plain text",
 		},
 		{
-			name:       "bold text",
-			input:      "This has **bold** text",
-			wantBold:   true,
-			wantItalic: false,
-			wantLink:   "",
+			name:     "bold text",
+			input:    "This has **bold** text",
+			expected: "This has <b>bold</b> text",
 		},
 		{
-			name:       "italic text",
-			input:      "This has *italic* text",
-			wantBold:   false,
-			wantItalic: true,
-			wantLink:   "",
+			name:     "italic text",
+			input:    "This has *italic* text",
+			expected: "This has <i>italic</i> text",
 		},
 		{
-			name:       "page link",
-			input:      "This has a [[page link]]",
-			wantBold:   false,
-			wantItalic: false,
-			wantLink:   "page link",
+			name:     "page link",
+			input:    "This has a [[page link]]",
+			expected: `This has a <a href="page link">page link</a>`,
 		},
 		{
-			name:       "bold and italic",
-			input:      "This has **bold** and *italic*",
-			wantBold:   true,
-			wantItalic: true,
-			wantLink:   "",
+			name:     "bold and italic",
+			input:    "This has **bold** and *italic*",
+			expected: "This has <b>bold</b> and <i>italic</i>",
 		},
 		{
-			name:       "link with spaces",
-			input:      "Link to [[My Important Page]]",
-			wantBold:   false,
-			wantItalic: false,
-			wantLink:   "My Important Page",
+			name:     "multiple links",
+			input:    "Link to [[Page A]] and [[Page B]]",
+			expected: `Link to <a href="Page A">Page A</a> and <a href="Page B">Page B</a>`,
+		},
+		{
+			name:     "multiple bold",
+			input:    "**First** and **second** bold",
+			expected: "<b>First</b> and <b>second</b> bold",
+		},
+		{
+			name:     "mixed formatting",
+			input:    "**Bold** text with *italic* and [[link]]",
+			expected: `<b>Bold</b> text with <i>italic</i> and <a href="link">link</a>`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			line := ParseLine(1, tt.input)
-			
-			if len(line.Elements) == 0 {
-				t.Fatalf("Expected elements to be parsed, got none")
-			}
-			
-			elem := line.Elements[0] // We know our simple parser returns one element
-			
-			if elem.Bold != tt.wantBold {
-				t.Errorf("Expected bold=%v, got %v", tt.wantBold, elem.Bold)
-			}
-			
-			if elem.Italic != tt.wantItalic {
-				t.Errorf("Expected italic=%v, got %v", tt.wantItalic, elem.Italic)
-			}
-			
-			if elem.Link != tt.wantLink {
-				t.Errorf("Expected link=%q, got %q", tt.wantLink, elem.Link)
+			result := RenderToHTML(tt.input)
+			if result != tt.expected {
+				t.Errorf("RenderToHTML() = %q, want %q", result, tt.expected)
 			}
 		})
 	}
@@ -190,5 +171,13 @@ func BenchmarkParseLine(b *testing.B) {
 	// This runs the ParseLine function b.N times
 	for i := 0; i < b.N; i++ {
 		ParseLine(1, "## This is a header with **bold** text")
+	}
+}
+
+// Benchmark HTML rendering
+func BenchmarkRenderToHTML(b *testing.B) {
+	text := "This has **bold** and *italic* text with [[links]] to [[other pages]]"
+	for i := 0; i < b.N; i++ {
+		RenderToHTML(text)
 	}
 }

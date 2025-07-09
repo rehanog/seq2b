@@ -42,46 +42,22 @@ func main() {
 	}
 }
 
-// printLine formats and prints a parsed line
+// printLine formats and prints a parsed line with HTML rendering
 func printLine(line parser.Line) {
 	switch line.Type {
 	case parser.TypeEmpty:
 		fmt.Printf("Line %d: Empty\n", line.Number)
 	case parser.TypeHeader:
+		htmlContent := parser.RenderToHTML(line.Content)
 		fmt.Printf("Line %d: Header (level %d): %s\n", line.Number, line.HeaderLevel, line.Content)
-		printElements(line.Elements)
+		fmt.Printf("  HTML: <h%d>%s</h%d>\n", line.HeaderLevel, htmlContent, line.HeaderLevel)
 	case parser.TypeList:
+		htmlContent := parser.RenderToHTML(line.Content)
 		fmt.Printf("Line %d: List item: %s\n", line.Number, line.Content)
-		printElements(line.Elements)
+		fmt.Printf("  HTML: <li>%s</li>\n", htmlContent)
 	case parser.TypeText:
+		htmlContent := parser.RenderToHTML(line.Content)
 		fmt.Printf("Line %d: Text: %s\n", line.Number, line.Content)
-		printElements(line.Elements)
-	}
-}
-
-// printElements shows the parsed markdown elements
-func printElements(elements []parser.MarkdownElement) {
-	if len(elements) == 0 {
-		return
-	}
-	
-	for i, elem := range elements {
-		fmt.Printf("  Element %d: ", i+1)
-		
-		features := []string{}
-		if elem.Bold {
-			features = append(features, "bold")
-		}
-		if elem.Italic {
-			features = append(features, "italic")
-		}
-		if elem.Link != "" {
-			features = append(features, fmt.Sprintf("link->%s", elem.Link))
-		}
-		
-		if len(features) > 0 {
-			fmt.Printf("[%s] ", strings.Join(features, ", "))
-		}
-		fmt.Printf("'%s'\n", elem.Text)
+		fmt.Printf("  HTML: <p>%s</p>\n", htmlContent)
 	}
 }
