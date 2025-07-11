@@ -110,7 +110,7 @@ function createBlockElement(block) {
     // Create editable text div
     const textDiv = document.createElement('div');
     textDiv.className = 'block-text';
-    textDiv.contentEditable = 'true';
+    textDiv.contentEditable = 'false'; // Start with editing disabled
     textDiv.innerHTML = processLinksInHTML(block.htmlContent);
     
     // Store original content for editing
@@ -118,6 +118,7 @@ function createBlockElement(block) {
     
     // Handle focus - show raw markdown
     textDiv.addEventListener('focus', function() {
+        this.contentEditable = 'true'; // Enable editing
         this.classList.add('editing');
         this.textContent = this.getAttribute('data-raw-content');
         // Place cursor at end
@@ -135,6 +136,7 @@ function createBlockElement(block) {
         if (this.dataset.saving === 'true') return;
         
         this.dataset.saving = 'true';
+        this.contentEditable = 'false'; // Disable editing
         this.classList.remove('editing');
         const newContent = this.textContent;
         const blockId = blockDiv.getAttribute('data-block-id');
@@ -151,12 +153,26 @@ function createBlockElement(block) {
         this.dataset.saving = 'false';
     });
     
-    // Prevent navigation when clicking on links in edit mode
+    // Handle clicks - prevent edit mode when clicking links
     textDiv.addEventListener('click', function(e) {
+        // If already editing, prevent link navigation
         if (this.classList.contains('editing')) {
             e.preventDefault();
             e.stopPropagation();
+            return;
         }
+        
+        // Check if click was on a link
+        const link = e.target.closest('.page-link');
+        if (link) {
+            // Let the link handle the click, don't enter edit mode
+            e.stopPropagation();
+            return;
+        }
+        
+        // Otherwise, enter edit mode by temporarily enabling contentEditable and focusing
+        this.contentEditable = 'true';
+        this.focus();
     });
     
     // Handle keyboard navigation
@@ -174,6 +190,22 @@ function createBlockElement(block) {
             } else {
                 handleIndent(blockDiv);
             }
+        } else if (e.key === 'Backspace' || e.key === 'Delete') {
+            const selection = window.getSelection();
+            const range = selection.getRangeAt(0);
+            const cursorPos = range.startOffset;
+            
+            // If at beginning of block and pressing backspace, merge with previous
+            if (e.key === 'Backspace' && cursorPos === 0 && this.textContent.length > 0) {
+                e.preventDefault();
+                handleMergeWithPrevious(this, blockDiv);
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            handleArrowUp(this, blockDiv);
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            handleArrowDown(this, blockDiv);
         }
     });
     
@@ -294,7 +326,15 @@ function handleEnterKey(textDiv, blockDiv) {
     const selection = window.getSelection();
     const range = selection.getRangeAt(0);
     const textContent = textDiv.textContent;
-    const cursorPos = range.startOffset;
+    
+    // Get the actual cursor position
+    let cursorPos = 0;
+    if (range.startContainer.nodeType === Node.TEXT_NODE) {
+        cursorPos = range.startOffset;
+    } else {
+        // If not in a text node, we're probably at the end
+        cursorPos = textContent.length;
+    }
     
     // Split content at cursor position
     const beforeCursor = textContent.substring(0, cursorPos);
@@ -319,25 +359,45 @@ function handleEnterKey(textDiv, blockDiv) {
     // Create the new block element
     const newBlockElement = createBlockElement(newBlock);
     
-    // Insert after current block
-    if (blockDiv.nextSibling) {
-        blockDiv.parentNode.insertBefore(newBlockElement, blockDiv.nextSibling);
+    // Check if current block already has children
+    const childrenContainer = blockDiv.querySelector('.block-children');
+    
+    if (childrenContainer && afterCursor) {
+        // If has children AND we're moving text, insert as first child
+        childrenContainer.insertBefore(newBlockElement, childrenContainer.firstChild);
+        // Update the depth of the new block
+        newBlockElement.setAttribute('data-depth', parseInt(blockDiv.getAttribute('data-depth')) + 1);
     } else {
-        blockDiv.parentNode.appendChild(newBlockElement);
+        // Otherwise insert after current block at same level
+        if (blockDiv.nextSibling) {
+            blockDiv.parentNode.insertBefore(newBlockElement, blockDiv.nextSibling);
+        } else {
+            blockDiv.parentNode.appendChild(newBlockElement);
+        }
     }
     
     // Focus the new block
     const newTextDiv = newBlockElement.querySelector('.block-text');
     if (newTextDiv) {
+        // Store whether we should position cursor at start
+        const shouldPositionAtStart = afterCursor.length > 0;
+        
         setTimeout(() => {
+            // Enable contentEditable before focusing
+            newTextDiv.contentEditable = 'true';
             newTextDiv.focus();
-            // Place cursor at beginning
-            const range = document.createRange();
-            const sel = window.getSelection();
-            range.setStart(newTextDiv.childNodes[0] || newTextDiv, 0);
-            range.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(range);
+            
+            // After focus handler converts to markdown, position cursor
+            if (shouldPositionAtStart) {
+                setTimeout(() => {
+                    const range = document.createRange();
+                    const sel = window.getSelection();
+                    range.setStart(newTextDiv.childNodes[0] || newTextDiv, 0);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }, 10);
+            }
         }, 50);
     }
 }
@@ -403,6 +463,179 @@ function handleOutdent(blockDiv) {
         const textDiv = blockDiv.querySelector('.block-text');
         if (textDiv) textDiv.focus();
     }
+}
+
+// Handle merge with previous block (Backspace at start)
+function handleMergeWithPrevious(textDiv, blockDiv) {
+    const prevBlock = findPreviousEditableBlock(blockDiv);
+    if (!prevBlock) return;
+    
+    const prevTextDiv = prevBlock.querySelector('.block-text');
+    if (!prevTextDiv) return;
+    
+    // Get the content to merge
+    const contentToMerge = textDiv.textContent;
+    const prevContent = prevTextDiv.getAttribute('data-raw-content') || '';
+    
+    // Save cursor position (will be at end of previous content)
+    const cursorPos = prevContent.length;
+    
+    // Update previous block with merged content
+    prevTextDiv.setAttribute('data-raw-content', prevContent + contentToMerge);
+    
+    // Remove current block
+    blockDiv.remove();
+    
+    // Focus previous block and position cursor
+    prevTextDiv.contentEditable = 'true';
+    prevTextDiv.focus();
+    
+    // Position cursor after the focus handler runs
+    setTimeout(() => {
+        const range = document.createRange();
+        const sel = window.getSelection();
+        if (prevTextDiv.childNodes[0]) {
+            range.setStart(prevTextDiv.childNodes[0], cursorPos);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    }, 10);
+}
+
+// Handle arrow up navigation
+function handleArrowUp(textDiv, blockDiv) {
+    const prevBlock = findPreviousEditableBlock(blockDiv);
+    if (!prevBlock) return;
+    
+    const prevTextDiv = prevBlock.querySelector('.block-text');
+    if (!prevTextDiv) return;
+    
+    // Get current cursor position
+    const selection = window.getSelection();
+    const range = selection.getRangeAt(0);
+    const cursorPos = range.startOffset;
+    
+    // Save current content before blur
+    textDiv.blur();
+    
+    // Focus previous block
+    prevTextDiv.contentEditable = 'true';
+    prevTextDiv.focus();
+    
+    // Try to maintain horizontal cursor position
+    setTimeout(() => {
+        const range = document.createRange();
+        const sel = window.getSelection();
+        const textLength = prevTextDiv.textContent.length;
+        const newPos = Math.min(cursorPos, textLength);
+        
+        if (prevTextDiv.childNodes[0]) {
+            range.setStart(prevTextDiv.childNodes[0], newPos);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    }, 10);
+}
+
+// Handle arrow down navigation
+function handleArrowDown(textDiv, blockDiv) {
+    const nextBlock = findNextEditableBlock(blockDiv);
+    if (!nextBlock) return;
+    
+    const nextTextDiv = nextBlock.querySelector('.block-text');
+    if (!nextTextDiv) return;
+    
+    // Get current cursor position
+    const selection = window.getSelection();
+    const range = selection.getRangeAt(0);
+    const cursorPos = range.startOffset;
+    
+    // Save current content before blur
+    textDiv.blur();
+    
+    // Focus next block
+    nextTextDiv.contentEditable = 'true';
+    nextTextDiv.focus();
+    
+    // Try to maintain horizontal cursor position
+    setTimeout(() => {
+        const range = document.createRange();
+        const sel = window.getSelection();
+        const textLength = nextTextDiv.textContent.length;
+        const newPos = Math.min(cursorPos, textLength);
+        
+        if (nextTextDiv.childNodes[0]) {
+            range.setStart(nextTextDiv.childNodes[0], newPos);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    }, 10);
+}
+
+// Find previous editable block (handling nesting)
+function findPreviousEditableBlock(blockDiv) {
+    // First check previous sibling
+    let prev = blockDiv.previousSibling;
+    if (prev && prev.classList && prev.classList.contains('block')) {
+        // If previous has children, get the last descendant
+        let lastChild = prev;
+        while (lastChild.querySelector('.block-children > .block:last-child')) {
+            lastChild = lastChild.querySelector('.block-children > .block:last-child');
+        }
+        return lastChild;
+    }
+    
+    // No previous sibling, check parent
+    const parentContainer = blockDiv.parentNode;
+    if (parentContainer && parentContainer.classList.contains('block-children')) {
+        const parentBlock = parentContainer.parentNode;
+        if (parentBlock && parentBlock.classList.contains('block')) {
+            return parentBlock;
+        }
+    }
+    
+    return null;
+}
+
+// Find next editable block (handling nesting)
+function findNextEditableBlock(blockDiv) {
+    // First check if current block has children
+    const childContainer = blockDiv.querySelector('.block-children');
+    if (childContainer) {
+        const firstChild = childContainer.querySelector('.block');
+        if (firstChild) return firstChild;
+    }
+    
+    // No children, check next sibling
+    let next = blockDiv.nextSibling;
+    if (next && next.classList && next.classList.contains('block')) {
+        return next;
+    }
+    
+    // No next sibling, traverse up and find parent's next sibling
+    let current = blockDiv;
+    while (current) {
+        const parentContainer = current.parentNode;
+        if (parentContainer && parentContainer.classList.contains('block-children')) {
+            const parentBlock = parentContainer.parentNode;
+            if (parentBlock && parentBlock.classList.contains('block')) {
+                const parentNext = parentBlock.nextSibling;
+                if (parentNext && parentNext.classList && parentNext.classList.contains('block')) {
+                    return parentNext;
+                }
+                current = parentBlock;
+            } else {
+                break;
+            }
+        } else {
+            break;
+        }
+    }
+    
+    return null;
 }
 
 // Keyboard shortcuts

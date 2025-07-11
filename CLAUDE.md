@@ -53,6 +53,15 @@ Building a high-performance Logseq replacement in Go with focus on:
 
 **IMPORTANT**: Do NOT add "Generated with Claude Code" or "Co-Authored-By: Claude" to commit messages. Keep them clean and professional.
 
+### JJ (Jujutsu) Workflow - IMPORTANT!
+When committing and pushing with jj:
+1. Create a snapshot: `jj describe -m "Your commit message"`
+2. Commit the changes: `jj commit -m "Your commit message"`
+3. **CRITICAL**: Move the main bookmark to the new commit: `jj bookmark set main -r @-`
+4. Push to GitHub: `jj git push --branch main`
+
+**Why this happens**: After `jj commit`, you're on a new empty working copy (@), and the commit you just made is at @-. The main bookmark needs to be explicitly moved to @- before pushing, otherwise it stays pointing at the old commit.
+
 ### Current Progress
 - [x] Initial project setup
 - [x] Step 1.1: Basic file reader
