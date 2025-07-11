@@ -22,6 +22,9 @@ export namespace main {
 	    htmlContent: string;
 	    depth: number;
 	    children: BlockData[];
+	    todoState: string;
+	    checkboxState: string;
+	    priority: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new BlockData(source);
@@ -34,6 +37,9 @@ export namespace main {
 	        this.htmlContent = source["htmlContent"];
 	        this.depth = source["depth"];
 	        this.children = this.convertValues(source["children"], BlockData);
+	        this.todoState = source["todoState"];
+	        this.checkboxState = source["checkboxState"];
+	        this.priority = source["priority"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

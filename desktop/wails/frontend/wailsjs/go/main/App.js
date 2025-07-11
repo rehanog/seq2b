@@ -17,3 +17,11 @@ export function GetPageList() {
 export function LoadDirectory(arg1) {
   return window['go']['main']['App']['LoadDirectory'](arg1);
 }
+
+export function RefreshPages() {
+  return window['go']['main']['App']['RefreshPages']();
+}
+
+export function UpdateBlock(arg1, arg2, arg3) {
+  return window['go']['main']['App']['UpdateBlock'](arg1, arg2, arg3);
+}

@@ -9,3 +9,7 @@ export function GetPage(arg1:string):Promise<main.PageData>;
 export function GetPageList():Promise<Array<string>>;
 
 export function LoadDirectory(arg1:string):Promise<void>;
+
+export function RefreshPages():Promise<void>;
+
+export function UpdateBlock(arg1:string,arg2:string,arg3:string):Promise<void>;

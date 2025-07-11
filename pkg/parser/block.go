@@ -38,6 +38,7 @@ type Block struct {
 	
 	// Computed properties
 	Content     string    // Combined content from all lines
+	TodoInfo    TodoInfo  // TODO state and checkbox information
 	HTMLContent string    // Rendered HTML (cached)
 }
 
@@ -175,6 +176,30 @@ func (b *Block) updateContent() {
 		contents = append(contents, line.Content)
 	}
 	b.Content = strings.Join(contents, "\n")
+	
+	// Parse TODO information from the first line
+	if len(b.Lines) > 0 {
+		b.TodoInfo = ParseTodoInfo(b.Lines[0].Content)
+	}
+}
+
+// SetContent updates the block's content and reparses it
+func (b *Block) SetContent(newContent string) {
+	b.Content = newContent
+	
+	// Update lines
+	lines := strings.Split(newContent, "\n")
+	b.Lines = make([]Line, len(lines))
+	for i, line := range lines {
+		b.Lines[i] = Line{
+			Content: line,
+		}
+	}
+	
+	// Reparse TODO information
+	if len(b.Lines) > 0 {
+		b.TodoInfo = ParseTodoInfo(b.Lines[0].Content)
+	}
 }
 
 // GetAllBlocks returns a flat list of all blocks in the page
@@ -211,7 +236,16 @@ func (b *Block) GetContent() string {
 // RenderHTML renders the block content as HTML
 func (b *Block) RenderHTML() string {
 	if b.HTMLContent == "" {
-		b.HTMLContent = RenderToHTML(b.GetContent())
+		content := b.GetContent()
+		
+		// If there's TODO info, render it specially
+		if b.TodoInfo.TodoState != TodoStateNone || b.TodoInfo.CheckboxState != CheckboxNone {
+			// Remove the TODO/checkbox prefix for clean rendering
+			contentWithoutPrefix := RemoveTodoPrefix(content)
+			b.HTMLContent = RenderToHTML(contentWithoutPrefix)
+		} else {
+			b.HTMLContent = RenderToHTML(content)
+		}
 	}
 	return b.HTMLContent
 }

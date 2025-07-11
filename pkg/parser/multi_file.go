@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // MultiPageResult represents the result of parsing multiple pages
@@ -77,6 +78,20 @@ func ParseDirectory(dirPath string) (*MultiPageResult, error) {
 	return result, nil
 }
 
+// TitleToFilename converts a page title to a filename
+func TitleToFilename(title string) string {
+	// Simple conversion: lowercase, replace spaces with hyphens, add .md
+	filename := strings.ToLower(title)
+	filename = strings.ReplaceAll(filename, " ", "-")
+	
+	// Remove any special characters that might be problematic
+	filename = strings.ReplaceAll(filename, "/", "-")
+	filename = strings.ReplaceAll(filename, "\\", "-")
+	filename = strings.ReplaceAll(filename, ":", "-")
+	
+	return filename + ".md"
+}
+
 // ParseFiles parses specific markdown files
 func ParseFiles(filePaths []string) (*MultiPageResult, error) {
 	result := &MultiPageResult{
@@ -111,3 +126,4 @@ func ParseFiles(filePaths []string) (*MultiPageResult, error) {
 	
 	return result, nil
 }
+

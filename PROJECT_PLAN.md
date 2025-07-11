@@ -116,14 +116,56 @@
   - [ ] Add Code of Conduct
   - [ ] Set up sponsorship (GitHub Sponsors)
 
-### Phase 3: Advanced Parsing Features (Deferred)
-- [ ] Parse properties (key:: value)
-- [ ] Parse tags (#tag)
-- [ ] Parse TODO states (TODO, DONE)
-- [ ] Implement file watcher
-- [ ] Write unit tests for advanced features
+### Phase 3: Basic Editing Capability
 
-### Phase 4: Persistent Storage Layer
+#### Step 3.1: TODO Lists ✅ COMPLETED
+- [x] Parse TODO/DONE/WAITING states in blocks
+- [x] Parse checkboxes [ ]/[x] with proper nesting
+- [x] Track completion status and inheritance
+- [x] Add TODO filtering and views
+- [x] Write unit tests for TODO parsing
+
+#### Step 3.2: Basic Block Editing
+- [ ] Add edit mode for individual blocks
+- [ ] Create simple text editor component
+- [ ] Handle save/cancel operations
+- [ ] Update parser to write changes back
+- [ ] Maintain block IDs during edits
+- [ ] Write unit tests for editing
+
+#### Phase 3 Goal
+Enable basic editing of blocks so users can modify their notes without external editors.
+
+### Phase 4: Daily Driver Features
+
+#### Step 4.1: Date Pages
+- [ ] Parse dates in standard format (YYYY-MM-DD, [[Jan 1st, 2025]], etc.)
+- [ ] Auto-create date pages like Logseq
+- [ ] Handle date page navigation and linking
+- [ ] Support journal-style daily notes
+- [ ] Write unit tests for date parsing
+
+#### Step 4.2: Home Page with Today's Date
+- [ ] Default to today's date page on startup
+- [ ] Add "Home" button in GUI to return to today
+- [ ] Auto-create today's page if it doesn't exist
+- [ ] Handle date page formatting and structure
+- [ ] Write unit tests for home page logic
+
+#### Step 4.3: Embedded Images
+- [ ] Parse image markdown syntax ![alt](path/to/image.png)
+- [ ] Handle relative and absolute image paths
+- [ ] Add image rendering in GUI
+- [ ] Support common image formats (PNG, JPG, GIF, SVG)
+- [ ] Write unit tests for image parsing
+
+#### Phase 4 Goal
+Complete the minimum viable daily driver with:
+- Daily journaling with date pages
+- Image embedding for visual notes
+- Combined with existing features (blocks, backlinks, TODOs, editing)
+
+### Phase 5: Persistent Storage Layer
 - [ ] Design efficient storage format (BadgerDB/BoltDB)
 - [ ] Write unit tests for storage interface
 - [ ] Implement indexing for fast queries
@@ -133,7 +175,7 @@
 - [ ] Add write-ahead logging for data integrity
 - [ ] Write integration tests for storage pipeline
 
-### Phase 5: Git/JJ Sync System
+### Phase 6: Git/JJ Sync System
 - [ ] Implement git integration with go-git
 - [ ] Write unit tests for git operations
 - [ ] Add jujutsu (jj) support
@@ -143,7 +185,7 @@
 - [ ] Implement mobile sync protocol
 - [ ] Write integration tests for sync pipeline
 
-### Phase 6: Security Implementation
+### Phase 7: Security Implementation
 - [ ] Set up code signing for binaries
 - [ ] Write tests for signature verification
 - [ ] Design plugin verification system
@@ -153,7 +195,7 @@
 - [ ] Create capability-based permissions
 - [ ] Write unit tests for permission system
 
-### Phase 7: AI Integration
+### Phase 8: AI Integration
 - [ ] Design AI provider interface
 - [ ] Write unit tests for AI interface
 - [ ] Implement local LLM support (Ollama/llama.cpp)
@@ -163,7 +205,7 @@
 - [ ] Create AI-powered linking suggestions
 - [ ] Write integration tests for AI features
 
-### Phase 8: API & CLI
+### Phase 9: API & CLI
 - [ ] Create REST/gRPC API for extensions
 - [ ] Write API unit tests
 - [ ] Write API integration tests

@@ -78,8 +78,48 @@ main {
 
 /* Block styles */
 .block {
-    margin: 0.5rem 0;
+    margin: 0;
     position: relative;
+}
+
+/* Container for child blocks with tree lines */
+.block-children {
+    position: relative;
+    margin-left: 1.5rem;
+}
+
+/* Vertical tree line connecting siblings */
+.block-children::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background-color: #e0e0e0;
+}
+
+/* Hide vertical line after last child */
+.block-children > .block:last-child::after {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 12px;
+    bottom: 0;
+    width: 1px;
+    background-color: white;
+    z-index: 1;
+}
+
+/* Vertical line from parent bullet to children */
+.block-has-children > .block-content::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 12px;
+    height: 24px;
+    width: 1px;
+    background-color: #e0e0e0;
 }
 
 .block-content {
@@ -87,31 +127,70 @@ main {
     align-items: flex-start;
     gap: 0.5rem;
     padding: 0.25rem 0;
+    position: relative;
+}
+
+/* Horizontal connector line from tree to bullet */
+.block-children > .block > .block-content::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 12px;
+    width: 16px;
+    height: 1px;
+    background-color: #e0e0e0;
+}
+
+.block-prefix {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    min-width: 1.2rem;
 }
 
 .block-bullet {
-    color: #666;
-    font-weight: bold;
-    margin-top: 0.1rem;
-    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #c0c0c0;
+    border: 1px solid #999;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    z-index: 1;
+}
+
+.block-bullet:hover {
+    background-color: #999;
+    transform: scale(1.2);
 }
 
 .block-text {
     flex: 1;
     word-wrap: break-word;
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    min-height: 1.4em;
+    outline: none;
+    transition: background-color 0.2s;
 }
 
-/* Indentation using CSS custom properties */
-.block[data-depth="0"] { --indent: 0; }
-.block[data-depth="1"] { --indent: 1.5rem; }
-.block[data-depth="2"] { --indent: 3rem; }
-.block[data-depth="3"] { --indent: 4.5rem; }
-.block[data-depth="4"] { --indent: 6rem; }
-.block[data-depth="5"] { --indent: 7.5rem; }
-
-.block {
-    margin-left: var(--indent);
+.block-text:hover {
+    background-color: #f8f8f8;
 }
+
+.block-text:focus {
+    background-color: #f0f0f0;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
+}
+
+.block-text.editing {
+    font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+    white-space: pre-wrap;
+}
+
+/* Remove old indentation - tree structure handles it now */
 
 /* Link styles */
 .page-link {
@@ -183,6 +262,63 @@ main {
     padding: 2rem;
     color: #999;
     font-style: italic;
+}
+
+/* TODO states */
+.todo-state {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    margin-right: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.todo-todo {
+    background-color: #ffe5b4;
+    color: #d4691e;
+}
+
+.todo-doing {
+    background-color: #e6f3ff;
+    color: #0066cc;
+}
+
+.todo-done {
+    background-color: #d4f4dd;
+    color: #00703c;
+}
+
+.todo-waiting {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.todo-canceled {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.todo-later {
+    background-color: #f0f0f0;
+    color: #666;
+}
+
+.todo-now {
+    background-color: #ffcccb;
+    color: #d32f2f;
+}
+
+.todo-priority {
+    margin-left: 0.25rem;
+    font-weight: 700;
+}
+
+/* Checkboxes */
+.block-checkbox {
+    margin-right: 0.5rem;
+    cursor: not-allowed;
 }
 
 /* Responsive design */

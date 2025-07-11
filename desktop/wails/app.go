@@ -25,7 +25,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
 	
 	"github.com/rehanog/seq2b/pkg/parser"
 )
@@ -50,8 +52,8 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	
-	// Load default directory
-	defaultDir := "testdata/pages"
+	// Load default directory - look for testdata in parent directories
+	defaultDir := "../../testdata/pages"
 	if absDir, err := filepath.Abs(defaultDir); err == nil {
 		a.LoadDirectory(absDir)
 	}
@@ -72,8 +74,22 @@ func (a *App) LoadDirectory(dirPath string) error {
 	return nil
 }
 
+// RefreshPages reloads all pages from the current directory
+func (a *App) RefreshPages() error {
+	if a.currentDir == "" {
+		return fmt.Errorf("no directory loaded")
+	}
+	return a.LoadDirectory(a.currentDir)
+}
+
 // GetPage returns page data for display
 func (a *App) GetPage(pageName string) (*PageData, error) {
+	// Always refresh before getting a page to ensure we have latest content
+	if err := a.RefreshPages(); err != nil {
+		// Log error but continue with cached version
+		fmt.Printf("Warning: failed to refresh pages: %v\n", err)
+	}
+	
 	page, exists := a.pages[pageName]
 	if !exists {
 		return nil, fmt.Errorf("page '%s' not found", pageName)
@@ -92,6 +108,11 @@ func (a *App) GetPage(pageName string) (*PageData, error) {
 
 // GetPageList returns all available pages
 func (a *App) GetPageList() []string {
+	// Refresh pages to get latest list
+	if err := a.RefreshPages(); err != nil {
+		fmt.Printf("Warning: failed to refresh pages: %v\n", err)
+	}
+	
 	pages := make([]string, 0, len(a.pages))
 	for name := range a.pages {
 		pages = append(pages, name)
@@ -130,6 +151,9 @@ type BlockData struct {
 	HTMLContent string `json:"htmlContent"`
 	Depth int `json:"depth"`
 	Children []BlockData `json:"children"`
+	TodoState string `json:"todoState"`
+	CheckboxState string `json:"checkboxState"`
+	Priority string `json:"priority"`
 }
 
 // BacklinkData represents backlink data for frontend
@@ -149,9 +173,98 @@ func convertBlocks(blocks []*parser.Block) []BlockData {
 			HTMLContent: block.RenderHTML(),
 			Depth: block.Depth,
 			Children: convertBlocks(block.Children),
+			TodoState: string(block.TodoInfo.TodoState),
+			CheckboxState: string(block.TodoInfo.CheckboxState),
+			Priority: block.TodoInfo.Priority,
 		}
 	}
 	return result
+}
+
+// UpdateBlock updates a block's content in a page
+func (a *App) UpdateBlock(pageName string, blockID string, newContent string) error {
+	page, exists := a.pages[pageName]
+	if !exists {
+		return fmt.Errorf("page '%s' not found", pageName)
+	}
+	
+	// Find and update the block
+	if updateBlockContent(page.Blocks, blockID, newContent) {
+		// Save the page back to disk
+		if err := a.savePage(page); err != nil {
+			return fmt.Errorf("failed to save page: %w", err)
+		}
+		
+		// Reparse the entire directory to update backlinks
+		return a.RefreshPages()
+	}
+	
+	return fmt.Errorf("block '%s' not found in page '%s'", blockID, pageName)
+}
+
+// savePage writes a page back to disk
+func (a *App) savePage(page *parser.Page) error {
+	// Reconstruct the markdown content
+	content := a.pageToMarkdown(page)
+	
+	// Determine the filename (convert title to filename)
+	filename := parser.TitleToFilename(page.Title)
+	filePath := filepath.Join(a.currentDir, filename)
+	
+	// Write to file
+	return os.WriteFile(filePath, []byte(content), 0644)
+}
+
+// pageToMarkdown converts a page back to markdown format
+func (a *App) pageToMarkdown(page *parser.Page) string {
+	var lines []string
+	
+	// Add title as header
+	lines = append(lines, "# " + page.Title)
+	lines = append(lines, "")
+	
+	// Convert blocks to markdown
+	a.blocksToMarkdown(page.Blocks, &lines, 0)
+	
+	return strings.Join(lines, "\n")
+}
+
+// blocksToMarkdown recursively converts blocks to markdown lines
+func (a *App) blocksToMarkdown(blocks []*parser.Block, lines *[]string, depth int) {
+	for _, block := range blocks {
+		// Create indentation
+		indent := strings.Repeat("  ", depth)
+		
+		// Add the block content with proper indentation
+		blockLines := strings.Split(block.Content, "\n")
+		for i, line := range blockLines {
+			if i == 0 {
+				*lines = append(*lines, indent + "- " + line)
+			} else {
+				*lines = append(*lines, indent + "  " + line)
+			}
+		}
+		
+		// Process children
+		if len(block.Children) > 0 {
+			a.blocksToMarkdown(block.Children, lines, depth+1)
+		}
+	}
+}
+
+// updateBlockContent recursively searches for and updates a block
+func updateBlockContent(blocks []*parser.Block, targetID string, newContent string) bool {
+	for _, block := range blocks {
+		if block.ID == targetID {
+			block.SetContent(newContent)
+			return true
+		}
+		// Check children
+		if updateBlockContent(block.Children, targetID, newContent) {
+			return true
+		}
+	}
+	return false
 }
 
 func convertBacklinks(backlinks map[string][]parser.BlockReference) []BacklinkData {
