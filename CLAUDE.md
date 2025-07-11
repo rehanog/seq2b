@@ -61,3 +61,10 @@ Building a high-performance Logseq replacement in Go with focus on:
 
 ## Next Tasks
 See PROJECT_PLAN.md for detailed task list and progress tracking.
+
+## Response Formatting
+- Always end responses with actual model information in backticks for subtle formatting (use the real model that generated the response, not a hardcoded string)
+- Do not start responses with model information
+
+## Writing Guidelines
+- When writing blog posts or content, reference voice.md for tone and style guidelines

@@ -3,9 +3,8 @@ layout: default
 title: Blog
 ---
 
-# Blog
-
-<div class="container" style="padding: 2rem 0;">
+<section class="container" style="padding: 2rem 0;">
+<h1>Blog</h1>
 
 <div class="blog-list">
 {% for post in site.posts %}
@@ -26,4 +25,4 @@ title: Blog
 </div>
 {% endif %}
 
-</div>
+</section>

@@ -5,7 +5,9 @@ title: Documentation
 
 # Documentation
 
-<div class="container" style="padding: 2rem 0;">
+<div class="blog-post-meta">
+  Getting Started Guide
+</div>
 
 ## Installation
 
@@ -28,144 +30,93 @@ cd seq2b
 # Build CLI tool
 go build -o seq2b-cli cmd/seq2b/main.go
 
-# Build desktop app
+# Build desktop GUI
 cd desktop/wails
 wails build
 ```
 
-## Usage Guide
+## Usage
 
 ### CLI Tool
+The command-line interface provides analysis and conversion tools:
 
-The CLI tool is perfect for automation, testing, and understanding your knowledge base structure.
-
-#### Basic Usage
 ```bash
-# Parse a single file
-./seq2b-cli path/to/note.md
+# Analyze a single file
+./seq2b-cli path/to/file.md
 
-# Parse a directory
-./seq2b-cli path/to/pages/
+# Process a directory
+./seq2b-cli path/to/directory
+
+# Generate HTML output
+./seq2b-cli --html path/to/file.md > output.html
 ```
 
-#### Output Includes
-- **Block Structure**: Hierarchical view of all blocks
-- **Backlinks**: Who links to whom
-- **Statistics**: Page count, block count, orphans
-- **Link Graph**: Visual representation of connections
+### Desktop Application
+Launch the native desktop app for interactive editing:
 
-#### Example Output
-```
-Directory: testdata/pages
-Pages found: 4
-==============
-
-Pages:
-  Page A - 5 blocks
-  Page B - 5 blocks
-  Page C - 3 blocks
-  Page D - 3 blocks
-
-=== Backlink Analysis ===
-
-Page A:
-  ← Referenced by:
-    - Page B (in blocks: block-2)
-    - Page C (in blocks: block-2)
-  → References:
-    - Page C (1 times)
-    - Page B (2 times)
+```bash
+cd desktop/wails
+wails dev  # Development mode
+# or
+./build/seq2b  # Production build
 ```
 
-### Desktop GUI
+## Features
 
-The desktop application provides a native, fast interface for navigating your knowledge base.
+### Block-Based Structure
+seq2b uses an outliner approach where content is organized in hierarchical blocks. Each block can contain text, links, and nested sub-blocks with proper indentation.
 
-#### Navigation
-- **Click [[page links]]** to navigate between pages
-- **Back button** or press `Escape` to go back
-- **Backlinks sidebar** shows all pages linking to current page
+### Bidirectional Linking
+Create connections between pages using `[[page name]]` syntax. The system automatically tracks forward and backward links, building a comprehensive knowledge graph.
 
-#### Keyboard Shortcuts
-- `Escape` - Go back to previous page
-- More shortcuts coming soon!
+### File Format
+All notes are stored as standard Markdown files on your local file system. No proprietary formats, no vendor lock-in. Your data remains accessible with any text editor.
 
-#### Features
-- **Real-time rendering** of markdown content
-- **Proper block indentation** with visual hierarchy
-- **Fast page switching** with no lag
-- **Native OS integration** for better performance
+### Performance
+Built in Go for exceptional speed. Parse thousands of pages in seconds, not minutes. Real-time link detection and HTML generation.
 
-## Project Structure
+## Architecture
 
-```
-seq2b/
-├── pkg/parser/          # Shared parsing library
-│   ├── parser.go       # Main parser logic
-│   ├── block.go        # Block structure
-│   ├── backlink.go     # Backlink indexing
-│   └── multi_file.go   # Directory parsing
-├── cmd/seq2b/      # CLI application
-│   └── main.go         # CLI entry point
-├── desktop/wails/      # Desktop GUI
-│   ├── app.go          # Backend logic
-│   ├── main.go         # Wails entry point
-│   └── frontend/       # Web-based UI
-└── mobile/             # Future mobile apps
-    ├── ios/
-    └── android/
+seq2b follows a modular design:
+
+- **Parser Library** (`pkg/parser/`): Core Markdown processing shared across platforms
+- **CLI Tool** (`cmd/seq2b/`): Command-line interface for batch operations
+- **Desktop GUI** (`desktop/wails/`): Native desktop application using Wails framework
+- **Mobile Apps** (`mobile/`): Future iOS and Android applications
+
+## Development
+
+### Running Tests
+```bash
+go test ./...
 ```
 
-## Configuration
+### Development Server
+```bash
+cd desktop/wails
+wails dev
+```
 
-Currently, Seq2B works out of the box with sensible defaults. Configuration options are coming in future releases.
+### Building for Production
+```bash
+# CLI
+go build -o seq2b cmd/seq2b/main.go
 
-### Planned Configuration
-- Custom keybindings
-- Theme selection
-- Parser options
-- Plugin settings
+# Desktop
+cd desktop/wails
+wails build
+```
 
 ## API Reference
 
-### Parser Package
+### Parser Functions
+- `ParseFile(filename string)`: Parse a single Markdown file
+- `ParseDirectory(path string)`: Process all `.md` files in a directory
+- `BuildBacklinks()`: Generate bidirectional link index
+- `ExportHTML()`: Convert to HTML with proper formatting
 
-```go
-import "github.com/rehanog/seq2b/pkg/parser"
-
-// Parse a single file
-result, err := parser.ParseFile(content)
-
-// Parse a directory
-result, err := parser.ParseDirectory(dirPath)
-
-// Access parsed data
-for pageName, page := range result.Pages {
-    fmt.Printf("%s has %d blocks\n", 
-        pageName, len(page.AllBlocks))
-}
-
-// Get backlinks
-backlinks := result.Backlinks.GetBacklinks("Page Name")
-```
-
-### Desktop App API
-
-The desktop app exposes these functions to the frontend:
-
-```typescript
-// Load a directory
-await LoadDirectory(path: string)
-
-// Get page data
-await GetPage(name: string)
-
-// Get all pages
-await GetPageList()
-
-// Get backlinks for a page
-await GetBacklinks(name: string)
-```
+### Configuration
+The parser can be configured for different Logseq compatibility modes and custom block indentation preferences.
 
 ## Troubleshooting
 
@@ -194,5 +145,3 @@ go mod tidy
 - [GitHub Issues](https://github.com/rehanog/seq2b/issues)
 - [Discussions](https://github.com/rehanog/seq2b/discussions)
 - Check existing issues before creating new ones
-
-</div>

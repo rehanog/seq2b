@@ -9,4 +9,5 @@ fi
 # Serve the site locally
 echo "Starting Jekyll server..."
 echo "Visit http://localhost:4000 to view the site"
-bundle exec jekyll serve --watch --livereload
+bundle exec jekyll serve --watch --livereload --baseurl ""
+#bundle exec jekyll serve --watch --livereload

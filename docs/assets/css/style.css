@@ -29,6 +29,29 @@ body {
     padding: 0 20px;
 }
 
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.5rem; }
+
+p {
+    margin-bottom: 1rem;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
 /* Header and Navigation */
 .site-header {
     background-color: var(--bg-color);
@@ -88,6 +111,19 @@ body {
 main {
     margin-top: 80px;
     min-height: calc(100vh - 300px);
+    padding: 0 2rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+main p {
+    text-align: justify;
+    line-height: 1.7;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    -ms-hyphens: auto;
 }
 
 /* Hero Section */
