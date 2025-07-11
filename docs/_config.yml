@@ -2,8 +2,8 @@ title: seq2b
 description: A high-performance knowledge management system built in Go
 author: Rehan
 email: rehanog@gmail.com
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site
+baseurl: "/seq2b" # the subpath of your site, e.g. /blog
+url: "https://rehanog.github.io" # the base hostname & protocol for your site
 
 # Build settings
 theme: minima
