@@ -1,7 +1,7 @@
 # Page A
 
 - TODO [#A] Critical: Fix data loss bug in syncgit l
-- DONE d Set up the basic parser
+- DONE d Set u
 - DOING Implementing TODO features
   - T
   - DONE Parse TODO states
@@ -10,7 +10,7 @@
 - LATER Futu
 - NOW Fix the
 - s
-- I need to check [[Page B]] for 
+- I need to check [[Page B]] for
   - Also see [[Page C]] for context
 - Another reference to [[Page B]] here
 - This block has no references

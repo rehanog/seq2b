@@ -24,41 +24,24 @@ package parser
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
-
-// Block represents a Logseq block (can be multi-line with children)
-type Block struct {
-	ID       string    // Unique identifier (could be UUID or hash)
-	Lines    []Line    // All lines belonging to this block (ordered)
-	Children []*Block  // Ordered child blocks
-	Parent   *Block    // Parent block (nil for top-level)
-	Depth    int       // Nesting depth (0 = top-level)
-	
-	// Computed properties
-	Content     string    // Combined content from all lines
-	TodoInfo    TodoInfo  // TODO state and checkbox information
-	HTMLContent string    // Rendered HTML (cached)
-}
-
-// Page represents a complete Logseq page
-type Page struct {
-	Name        string
-	Title       string    // Page title (usually from first header)
-	Blocks      []*Block  // Ordered top-level blocks
-	AllBlocks   []*Block  // Flat list of all blocks for easy searching
-	
-	// Metadata
-	Created     time.Time
-	Modified    time.Time
-}
 
 // ParseResult represents the result of parsing a file
 type ParseResult struct {
 	Page     *Page
 	Lines    []Line    // All parsed lines
 	Errors   []error   // Any parsing errors encountered
+}
+
+// MultiPageResult represents the result of parsing multiple pages
+type MultiPageResult struct {
+	Pages     map[string]*Page  // Map of page name to page
+	Backlinks *BacklinkIndex    // Cross-page backlink index
+	Errors    []error          // Any parsing errors
 }
 
 // parseContext is used temporarily during parsing
@@ -122,6 +105,97 @@ func ParseFile(content string) (*ParseResult, error) {
 	}, nil
 }
 
+// ParseDirectory parses all markdown files in a directory
+func ParseDirectory(dirPath string) (*MultiPageResult, error) {
+	result := &MultiPageResult{
+		Pages:     make(map[string]*Page),
+		Backlinks: NewBacklinkIndex(),
+		Errors:    []error{},
+	}
+	
+	// Find all markdown files
+	files, err := filepath.Glob(filepath.Join(dirPath, "*.md"))
+	if err != nil {
+		return nil, fmt.Errorf("error finding files: %w", err)
+	}
+	
+	// Parse each file
+	for _, filePath := range files {
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			result.Errors = append(result.Errors, 
+				fmt.Errorf("error reading %s: %w", filePath, err))
+			continue
+		}
+		
+		// Parse the file
+		parseResult, err := ParseFile(string(content))
+		if err != nil {
+			result.Errors = append(result.Errors,
+				fmt.Errorf("error parsing %s: %w", filePath, err))
+			continue
+		}
+		
+		// Store the page
+		page := parseResult.Page
+		result.Pages[page.Title] = page
+		
+		// Add to backlink index
+		result.Backlinks.AddPage(page)
+	}
+	
+	return result, nil
+}
+
+// ParseFiles parses specific markdown files
+func ParseFiles(filePaths []string) (*MultiPageResult, error) {
+	result := &MultiPageResult{
+		Pages:     make(map[string]*Page),
+		Backlinks: NewBacklinkIndex(),
+		Errors:    []error{},
+	}
+	
+	for _, filePath := range filePaths {
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			result.Errors = append(result.Errors,
+				fmt.Errorf("error reading %s: %w", filePath, err))
+			continue
+		}
+		
+		// Parse the file
+		parseResult, err := ParseFile(string(content))
+		if err != nil {
+			result.Errors = append(result.Errors,
+				fmt.Errorf("error parsing %s: %w", filePath, err))
+			continue
+		}
+		
+		// Store the page
+		page := parseResult.Page
+		result.Pages[page.Title] = page
+		
+		// Add to backlink index
+		result.Backlinks.AddPage(page)
+	}
+	
+	return result, nil
+}
+
+// TitleToFilename converts a page title to a filename
+func TitleToFilename(title string) string {
+	// Simple conversion: lowercase, replace spaces with hyphens, add .md
+	filename := strings.ToLower(title)
+	filename = strings.ReplaceAll(filename, " ", "-")
+	
+	// Remove any special characters that might be problematic
+	filename = strings.ReplaceAll(filename, "/", "-")
+	filename = strings.ReplaceAll(filename, "\\", "-")
+	filename = strings.ReplaceAll(filename, ":", "-")
+	
+	return filename + ".md"
+}
+
 // BuildBlockTree converts flat lines into hierarchical block structure
 func BuildBlockTree(contexts []parseContext) []*Block {
 	var rootBlocks []*Block
@@ -167,85 +241,4 @@ func BuildBlockTree(contexts []parseContext) []*Block {
 	}
 	
 	return rootBlocks
-}
-
-// updateContent updates the combined content from all lines
-func (b *Block) updateContent() {
-	contents := []string{}
-	for _, line := range b.Lines {
-		contents = append(contents, line.Content)
-	}
-	b.Content = strings.Join(contents, "\n")
-	
-	// Parse TODO information from the first line
-	if len(b.Lines) > 0 {
-		b.TodoInfo = ParseTodoInfo(b.Lines[0].Content)
-	}
-}
-
-// SetContent updates the block's content and reparses it
-func (b *Block) SetContent(newContent string) {
-	b.Content = newContent
-	
-	// Update lines
-	lines := strings.Split(newContent, "\n")
-	b.Lines = make([]Line, len(lines))
-	for i, line := range lines {
-		b.Lines[i] = Line{
-			Content: line,
-		}
-	}
-	
-	// Reparse TODO information
-	if len(b.Lines) > 0 {
-		b.TodoInfo = ParseTodoInfo(b.Lines[0].Content)
-	}
-}
-
-// GetAllBlocks returns a flat list of all blocks in the page
-func (p *Page) GetAllBlocks() []*Block {
-	var allBlocks []*Block
-	
-	var collectBlocks func([]*Block)
-	collectBlocks = func(blocks []*Block) {
-		for _, block := range blocks {
-			allBlocks = append(allBlocks, block)
-			collectBlocks(block.Children)
-		}
-	}
-	
-	collectBlocks(p.Blocks)
-	return allBlocks
-}
-
-// AddChild adds a child block and maintains relationships
-func (b *Block) AddChild(child *Block) {
-	child.Parent = b
-	child.Depth = b.Depth + 1
-	b.Children = append(b.Children, child)
-}
-
-// GetContent returns the combined content of all lines in the block
-func (b *Block) GetContent() string {
-	if b.Content == "" {
-		b.updateContent()
-	}
-	return b.Content
-}
-
-// RenderHTML renders the block content as HTML
-func (b *Block) RenderHTML() string {
-	if b.HTMLContent == "" {
-		content := b.GetContent()
-		
-		// If there's TODO info, render it specially
-		if b.TodoInfo.TodoState != TodoStateNone || b.TodoInfo.CheckboxState != CheckboxNone {
-			// Remove the TODO/checkbox prefix for clean rendering
-			contentWithoutPrefix := RemoveTodoPrefix(content)
-			b.HTMLContent = RenderToHTML(contentWithoutPrefix)
-		} else {
-			b.HTMLContent = RenderToHTML(content)
-		}
-	}
-	return b.HTMLContent
 }

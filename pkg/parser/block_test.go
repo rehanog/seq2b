@@ -53,12 +53,12 @@ func TestCalculateIndentLevel(t *testing.T) {
 func TestBuildBlockTree(t *testing.T) {
 	// Create test contexts
 	contexts := []parseContext{
-		{Line{1, TypeBlock, "A", 0}, 0},        // Top level A
-		{Line{2, TypeBlock, "A.1", 0}, 1},      // Child of A
-		{Line{3, TypeBlock, "A.2", 0}, 1},      // Another child of A
-		{Line{4, TypeBlock, "A.2.1", 0}, 2},    // Child of A.2
-		{Line{5, TypeBlock, "B", 0}, 0},        // Top level B
-		{Line{6, TypeBlock, "B.1", 0}, 1},      // Child of B
+		{Line{Number: 1, Type: TypeBlock, Content: "A", HeaderLevel: 0}, 0},        // Top level A
+		{Line{Number: 2, Type: TypeBlock, Content: "A.1", HeaderLevel: 0}, 1},      // Child of A
+		{Line{Number: 3, Type: TypeBlock, Content: "A.2", HeaderLevel: 0}, 1},      // Another child of A
+		{Line{Number: 4, Type: TypeBlock, Content: "A.2.1", HeaderLevel: 0}, 2},    // Child of A.2
+		{Line{Number: 5, Type: TypeBlock, Content: "B", HeaderLevel: 0}, 0},        // Top level B
+		{Line{Number: 6, Type: TypeBlock, Content: "B.1", HeaderLevel: 0}, 1},      // Child of B
 	}
 	
 	blocks := BuildBlockTree(contexts)

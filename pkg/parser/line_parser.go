@@ -43,7 +43,16 @@ type Line struct {
 	Type        LineType
 	Content     string
 	HeaderLevel int // Only used for headers
+	
+	// Parsed data - populated during line parsing
+	TodoInfo    TodoInfo  // TODO state and checkbox information
+	References  []string  // [[page]] references found in this line
 }
+
+// Regular expressions for parsing
+var (
+	pageRefPattern = regexp.MustCompile(`\[\[(.*?)\]\]`)
+)
 
 // ParseLine analyzes a single line and returns its type and content
 func ParseLine(number int, line string) Line {
@@ -77,40 +86,44 @@ func ParseLine(number int, line string) Line {
 	// Block (starts with -)
 	if strings.HasPrefix(trimmed, "-") {
 		blockText := strings.TrimSpace(trimmed[1:])
+		
+		// Parse TODO information from the block content
+		todoInfo := ParseTodoInfo(blockText)
+		
+		// Extract page references
+		references := extractPageReferences(blockText)
+		
 		return Line{
-			Number:  number,
-			Type:    TypeBlock,
-			Content: blockText,
+			Number:     number,
+			Type:       TypeBlock,
+			Content:    blockText,
+			TodoInfo:   todoInfo,
+			References: references,
 		}
 	}
 	
 	// Regular text
+	// Extract page references even from regular text
+	references := extractPageReferences(trimmed)
+	
 	return Line{
-		Number:  number,
-		Type:    TypeText,
-		Content: trimmed,
+		Number:     number,
+		Type:       TypeText,
+		Content:    trimmed,
+		References: references,
 	}
 }
 
-// RenderToHTML converts markdown text to HTML
-func RenderToHTML(text string) string {
-	if text == "" {
-		return ""
+// extractPageReferences finds all [[page]] references in text
+func extractPageReferences(text string) []string {
+	matches := pageRefPattern.FindAllStringSubmatch(text, -1)
+	references := make([]string, 0, len(matches))
+	
+	for _, match := range matches {
+		if len(match) > 1 {
+			references = append(references, match[1])
+		}
 	}
 	
-	html := text
-	
-	// Convert bold text first: **text** -> <b>text</b>
-	boldPattern := regexp.MustCompile(`\*\*(.*?)\*\*`)
-	html = boldPattern.ReplaceAllString(html, `<b>$1</b>`)
-	
-	// Convert italic text: *text* -> <i>text</i> (only single asterisks now)
-	italicPattern := regexp.MustCompile(`\*([^*]+?)\*`)
-	html = italicPattern.ReplaceAllString(html, `<i>$1</i>`)
-	
-	// Convert page links: [[page]] -> <a href="page">page</a>
-	linkPattern := regexp.MustCompile(`\[\[(.*?)\]\]`)
-	html = linkPattern.ReplaceAllString(html, `<a href="$1">$1</a>`)
-	
-	return html
+	return references
 }

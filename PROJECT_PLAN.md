@@ -125,16 +125,47 @@
 - [x] Add TODO filtering and views
 - [x] Write unit tests for TODO parsing
 
-#### Step 3.2: Basic Block Editing
-- [ ] Add edit mode for individual blocks
-- [ ] Create simple text editor component
-- [ ] Handle save/cancel operations
-- [ ] Update parser to write changes back
-- [ ] Maintain block IDs during edits
-- [ ] Write unit tests for editing
+#### Step 3.2: Basic Block Editing ✅ COMPLETED
+- [x] Add edit mode for individual blocks
+- [x] Create simple text editor component
+- [x] Handle save/cancel operations
+- [x] Update parser to write changes back
+- [x] Maintain block IDs during edits
+- [x] Write unit tests for editing
 
 #### Phase 3 Goal
 Enable basic editing of blocks so users can modify their notes without external editors.
+
+### Phase 3.5: Technical Debt Refactoring
+
+#### Parser Architecture Refactoring
+- [ ] Restructure parser files for single responsibility:
+  - [ ] Create file_parser.go - Contains ParseFile() and ParseDirectory() orchestration
+  - [ ] Create line_parser.go - Full parsing of line-level features (TODO, tags, etc.)
+  - [ ] Rename block.go to block_parser.go - Pure structural organization of pre-parsed lines
+  - [ ] Create markdown_renderer.go - Move RenderToHTML() and formatting functions
+- [ ] Update parsing flow:
+  - [ ] Line parser fully parses line-level features in initial pass
+  - [ ] Line struct carries parsed data (TodoInfo, etc.)
+  - [ ] Block parser reorganizes pre-parsed lines into hierarchical structure
+  - [ ] Blocks reference already-parsed data (no re-parsing needed)
+- [ ] Benefits: Clean separation of concerns, single-pass parsing, better performance
+
+#### Additional Refactoring (To be identified during code walkthrough)
+- [ ] Separate parsing from rendering:
+  - [ ] Change parser to output structured segments (text, bold, link, etc.) instead of HTML
+  - [ ] Remove RenderToHTML() from Go parser
+  - [ ] Move HTML generation to frontend JavaScript
+  - [ ] Benefits: Clean separation of concerns, flexible rendering, testable parsing
+- [ ] Implement incremental updates for editing:
+  - [ ] Return edit deltas from backend (added/removed/updated blocks)
+  - [ ] Update only affected DOM elements instead of full page reload
+  - [ ] Handle structural changes (block splits, merges, indentation)
+  - [ ] Update backlinks incrementally
+  - [ ] Benefits: Much faster editing, no UI flicker, maintains scroll position
+
+#### Phase 3.5 Goal
+Clean up technical debt and improve code efficiency before adding new features.
 
 ### Phase 4: Daily Driver Features
 
@@ -214,6 +245,18 @@ Complete the minimum viable daily driver with:
 - [ ] Write CLI integration tests
 - [ ] Optional: Minimal web UI for remote access
 - [ ] Write web UI tests
+
+### Phase 10: Performance & Scalability
+- [ ] Implement lazy loading for large vaults
+  - [ ] Parse files on-demand instead of all at startup
+  - [ ] Cache parsed pages with TTL
+  - [ ] Background parsing with progress indicator
+- [ ] Add progressive loading UI
+  - [ ] Show interface immediately
+  - [ ] Load pages as they're parsed
+  - [ ] Display parsing progress
+- [ ] Optimize for vaults with 1000+ files
+- [ ] Add performance benchmarks
 
 ## Technical Decisions
 

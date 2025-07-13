@@ -21,6 +21,14 @@ Building a high-performance Logseq replacement in Go with focus on:
 - Plugins: WASM for sandboxing
 - AI: Provider-agnostic interface
 
+## Version Control Workflow
+- **Primary VCS**: We use Jujutsu (jj) as our primary version control system
+- **Git Integration**: Git is used as a colocated repository for GitHub interaction
+- **Workflow**: 
+  - Make changes and use `jj` commands for local version control
+  - Use `git push` to sync with GitHub when needed
+  - Avoid git commands for branching/commits - use jj instead
+
 ## Commands to Run
 - Build: `go build -o seq2b cmd/seq2b/main.go`
 - Test: `go test ./...`
@@ -77,3 +85,10 @@ See PROJECT_PLAN.md for detailed task list and progress tracking.
 
 ## Writing Guidelines
 - When writing blog posts or content, reference voice.md for tone and style guidelines
+
+## Code Overview and Explanation Guidelines
+See EXPLANATION.md for detailed guidelines on:
+- Code overview format (Driver and Delegation level)
+- One-page chunks to avoid scrolling
+- Always including filenames above code snippets
+- Visual diagrams and architecture focus
