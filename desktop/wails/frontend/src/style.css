@@ -52,6 +52,21 @@ header {
     cursor: not-allowed;
 }
 
+.home-btn {
+    padding: 0.5rem 1rem;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.home-btn:hover {
+    background: #229954;
+}
+
 #pageTitle {
     font-size: 1.5rem;
     font-weight: 600;
@@ -353,4 +368,14 @@ main {
 .backlink-source:focus {
     outline: 2px solid #007aff;
     outline-offset: 2px;
+}
+
+/* Embedded images */
+.embedded-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0.5rem 0;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }

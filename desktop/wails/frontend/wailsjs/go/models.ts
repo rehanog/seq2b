@@ -20,6 +20,7 @@ export namespace main {
 	    type: string;
 	    content: string;
 	    target?: string;
+	    alt?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new SegmentData(source);
@@ -30,6 +31,7 @@ export namespace main {
 	        this.type = source["type"];
 	        this.content = source["content"];
 	        this.target = source["target"];
+	        this.alt = source["alt"];
 	    }
 	}
 	export class BlockData {

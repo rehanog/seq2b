@@ -24,10 +24,14 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
+	"time"
 	
 	"github.com/rehanog/seq2b/pkg/parser"
 )
@@ -53,7 +57,7 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	
 	// Load default directory - look for testdata in parent directories
-	defaultDir := "../../testdata/pages"
+	defaultDir := "../../testdata/library_test_0/pages"
 	if absDir, err := filepath.Abs(defaultDir); err == nil {
 		a.LoadDirectory(absDir)
 	}
@@ -92,7 +96,26 @@ func (a *App) GetPage(pageName string) (*PageData, error) {
 	
 	page, exists := a.pages[pageName]
 	if !exists {
-		return nil, fmt.Errorf("page '%s' not found", pageName)
+		// Check if this is a date page request
+		if parser.IsDatePage(pageName) {
+			// Auto-create the date page
+			if err := a.createDatePage(pageName); err != nil {
+				return nil, fmt.Errorf("failed to create date page: %w", err)
+			}
+			
+			// Refresh pages to load the new page
+			if err := a.RefreshPages(); err != nil {
+				return nil, fmt.Errorf("failed to refresh after creating date page: %w", err)
+			}
+			
+			// Try to get the page again
+			page, exists = a.pages[pageName]
+			if !exists {
+				return nil, fmt.Errorf("date page not found after creation: %s", pageName)
+			}
+		} else {
+			return nil, fmt.Errorf("page '%s' not found", pageName)
+		}
 	}
 	
 	// Get backlinks for this page
@@ -146,9 +169,10 @@ type PageData struct {
 
 // SegmentData represents a text segment for frontend
 type SegmentData struct {
-	Type    string `json:"type"`    // "text", "bold", "italic", "link"
+	Type    string `json:"type"`    // "text", "bold", "italic", "link", "image"
 	Content string `json:"content"`
-	Target  string `json:"target,omitempty"` // For links
+	Target  string `json:"target,omitempty"` // For links and images
+	Alt     string `json:"alt,omitempty"`    // For images
 }
 
 // BlockData represents block data for frontend
@@ -202,12 +226,15 @@ func convertSegments(segments []parser.Segment) []SegmentData {
 			segType = "italic"
 		case parser.SegmentLink:
 			segType = "link"
+		case parser.SegmentImage:
+			segType = "image"
 		}
 		
 		result[i] = SegmentData{
 			Type:    segType,
 			Content: seg.Content,
 			Target:  seg.Target,
+			Alt:     seg.Alt,
 		}
 	}
 	return result
@@ -232,6 +259,142 @@ func (a *App) UpdateBlock(pageName string, blockID string, newContent string) er
 	}
 	
 	return fmt.Errorf("block '%s' not found in page '%s'", blockID, pageName)
+}
+
+// UpdateBlockAtPath updates a block's content using positional addressing
+func (a *App) UpdateBlockAtPath(pageName string, path BlockPath, newContent string) (map[string]interface{}, error) {
+	// Work with current state for incremental updates
+	page, exists := a.pages[pageName]
+	if !exists {
+		return nil, fmt.Errorf("page '%s' not found", pageName)
+	}
+	
+	// Find the block by path
+	block, err := FindBlockByPath(page.Blocks, path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find block: %w", err)
+	}
+	
+	// Update the block content
+	oldContent := block.Content
+	block.SetContent(newContent)
+	
+	// Save the page
+	if err := a.savePage(page); err != nil {
+		return nil, fmt.Errorf("failed to save page: %w", err)
+	}
+	
+	// Return delta for incremental update
+	blockData := BlockData{
+		Content:       block.Content,
+		HTMLContent:   block.RenderHTML(),
+		Segments:      convertSegments(block.Segments),
+		Depth:         block.Depth,
+		TodoState:     string(block.TodoInfo.TodoState),
+		CheckboxState: string(block.TodoInfo.CheckboxState),
+		Priority:      block.TodoInfo.Priority,
+		Children:      []BlockData{}, // Children don't change
+	}
+	
+	delta := map[string]interface{}{
+		"action": "update",
+		"path":   path,
+		"block":  blockData,
+		"oldContent": oldContent,
+	}
+	
+	// Update backlinks incrementally if references changed
+	oldRefs := extractPageReferences(oldContent)
+	newRefs := extractPageReferences(newContent)
+	
+	// Update backlinks for changed references
+	for _, ref := range oldRefs {
+		if !contains(newRefs, ref) {
+			// Reference removed
+			a.removeBacklink(ref, pageName)
+		}
+	}
+	for _, ref := range newRefs {
+		if !contains(oldRefs, ref) {
+			// Reference added
+			a.addBacklink(ref, pageName)
+		}
+	}
+	
+	return delta, nil
+}
+
+// Helper functions for incremental backlink updates
+func (a *App) addBacklink(targetPage, sourcePage string) {
+	if a.backlinks == nil {
+		a.backlinks = &parser.BacklinkIndex{
+			ForwardLinks:  make(map[string]map[string][]parser.BlockReference),
+			BackwardLinks: make(map[string]map[string][]parser.BlockReference),
+		}
+	}
+	
+	// Add to backward links
+	if _, exists := a.backlinks.BackwardLinks[targetPage]; !exists {
+		a.backlinks.BackwardLinks[targetPage] = make(map[string][]parser.BlockReference)
+	}
+	if _, exists := a.backlinks.BackwardLinks[targetPage][sourcePage]; !exists {
+		a.backlinks.BackwardLinks[targetPage][sourcePage] = []parser.BlockReference{}
+	}
+	
+	// Add to forward links
+	if _, exists := a.backlinks.ForwardLinks[sourcePage]; !exists {
+		a.backlinks.ForwardLinks[sourcePage] = make(map[string][]parser.BlockReference)
+	}
+	if _, exists := a.backlinks.ForwardLinks[sourcePage][targetPage]; !exists {
+		a.backlinks.ForwardLinks[sourcePage][targetPage] = []parser.BlockReference{}
+	}
+}
+
+func (a *App) removeBacklink(targetPage, sourcePage string) {
+	if a.backlinks == nil {
+		return
+	}
+	
+	// Remove from backward links
+	if sources, exists := a.backlinks.BackwardLinks[targetPage]; exists {
+		delete(sources, sourcePage)
+		if len(sources) == 0 {
+			delete(a.backlinks.BackwardLinks, targetPage)
+		}
+	}
+	
+	// Remove from forward links
+	if targets, exists := a.backlinks.ForwardLinks[sourcePage]; exists {
+		delete(targets, targetPage)
+		if len(targets) == 0 {
+			delete(a.backlinks.ForwardLinks, sourcePage)
+		}
+	}
+}
+
+// extractPageReferences finds all [[page]] references in text
+func extractPageReferences(text string) []string {
+	pattern := regexp.MustCompile(`\[\[(.*?)\]\]`)
+	matches := pattern.FindAllStringSubmatch(text, -1)
+	references := make([]string, 0, len(matches))
+	
+	for _, match := range matches {
+		if len(match) > 1 {
+			references = append(references, match[1])
+		}
+	}
+	
+	return references
+}
+
+// contains checks if a string slice contains a value
+func contains(slice []string, value string) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }
 
 // savePage writes a page back to disk
@@ -284,6 +447,45 @@ func (a *App) blocksToMarkdown(blocks []*parser.Block, lines *[]string, depth in
 	}
 }
 
+// createDatePage creates a new date page with default content
+func (a *App) createDatePage(dateTitle string) error {
+	// Parse the date from the title
+	date, err := parser.ParseDateTitle(dateTitle)
+	if err != nil {
+		return fmt.Errorf("invalid date title: %w", err)
+	}
+	
+	// Generate the filename
+	filename := parser.GetDatePageFilename(date)
+	filePath := filepath.Join(a.currentDir, filename)
+	
+	// Check if file already exists
+	if _, err := os.Stat(filePath); err == nil {
+		// File already exists, no need to create
+		return nil
+	}
+	
+	// Create the file
+	file, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer file.Close()
+	
+	// Write default content for a journal page
+	content := fmt.Sprintf(`# %s
+
+- 
+
+`, dateTitle)
+	
+	if _, err := file.WriteString(content); err != nil {
+		return fmt.Errorf("failed to write content: %w", err)
+	}
+	
+	return nil
+}
+
 // updateBlockContent recursively searches for and updates a block
 func updateBlockContent(blocks []*parser.Block, targetID string, newContent string) bool {
 	for _, block := range blocks {
@@ -316,4 +518,249 @@ func convertBacklinks(backlinks map[string][]parser.BlockReference) []BacklinkDa
 	}
 	
 	return result
+}
+
+// generateBlockID generates a unique block ID
+func generateBlockID() string {
+	// Generate 16 random bytes
+	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		// Fallback to timestamp-based ID if random fails
+		return fmt.Sprintf("block-%d", time.Now().UnixNano())
+	}
+	// Convert to hex string
+	return hex.EncodeToString(bytes)
+}
+
+// AddBlock adds a new block to a page
+func (a *App) AddBlock(pageName string, parentBlockID string, afterBlockID string, content string, depth int) (map[string]interface{}, error) {
+	// Refresh to ensure we have latest content
+	if err := a.RefreshPages(); err != nil {
+		return nil, fmt.Errorf("failed to refresh pages: %w", err)
+	}
+	
+	page, exists := a.pages[pageName]
+	if !exists {
+		return nil, fmt.Errorf("page '%s' not found", pageName)
+	}
+	
+	// Create new block
+	newBlock := &parser.Block{
+		ID:       generateBlockID(),
+		Content:  content,
+		Depth:    depth,
+		Children: []*parser.Block{},
+	}
+	
+	// Parse the content into lines
+	lines := strings.Split(content, "\n")
+	newBlock.Lines = make([]parser.Line, len(lines))
+	for i, line := range lines {
+		newBlock.Lines[i] = parser.ParseLine(i+1, line)
+	}
+	
+	// Update block content to parse TODO info and segments
+	newBlock.SetContent(content)
+	
+	// Find insertion point
+	if parentBlockID != "" {
+		// Add as child of specific parent
+		parent := findBlockByID(page.Blocks, parentBlockID)
+		if parent == nil {
+			return nil, fmt.Errorf("parent block '%s' not found", parentBlockID)
+		}
+		
+		// Set parent relationship
+		newBlock.Parent = parent
+		newBlock.Depth = parent.Depth + 1
+		
+		if afterBlockID != "" {
+			// Insert after specific sibling
+			inserted := false
+			for i, child := range parent.Children {
+				if child.ID == afterBlockID {
+					// Insert after this child
+					parent.Children = append(parent.Children[:i+1], append([]*parser.Block{newBlock}, parent.Children[i+1:]...)...)
+					inserted = true
+					break
+				}
+			}
+			if !inserted {
+				return nil, fmt.Errorf("after block '%s' not found in parent's children", afterBlockID)
+			}
+		} else {
+			// Add to end of parent's children
+			parent.Children = append(parent.Children, newBlock)
+		}
+	} else {
+		// Add as top-level block
+		if afterBlockID != "" {
+			// Insert after specific block
+			inserted := false
+			for i, block := range page.Blocks {
+				if block.ID == afterBlockID {
+					// Insert after this block
+					page.Blocks = append(page.Blocks[:i+1], append([]*parser.Block{newBlock}, page.Blocks[i+1:]...)...)
+					inserted = true
+					break
+				}
+			}
+			if !inserted {
+				return nil, fmt.Errorf("after block '%s' not found", afterBlockID)
+			}
+		} else {
+			// Add to end of page
+			page.Blocks = append(page.Blocks, newBlock)
+		}
+	}
+	
+	// Save the page
+	if err := a.savePage(page); err != nil {
+		return nil, fmt.Errorf("failed to save page: %w", err)
+	}
+	
+	// Refresh to update backlinks
+	if err := a.RefreshPages(); err != nil {
+		return nil, fmt.Errorf("failed to refresh after save: %w", err)
+	}
+	
+	// Return the new block data
+	blockData := BlockData{
+		ID:            newBlock.ID,
+		Content:       newBlock.Content,
+		HTMLContent:   newBlock.RenderHTML(),
+		Segments:      convertSegments(newBlock.Segments),
+		Depth:         newBlock.Depth,
+		Children:      []BlockData{}, // New block has no children yet
+		TodoState:     string(newBlock.TodoInfo.TodoState),
+		CheckboxState: string(newBlock.TodoInfo.CheckboxState),
+		Priority:      newBlock.TodoInfo.Priority,
+	}
+	
+	return map[string]interface{}{
+		"id":    newBlock.ID,
+		"block": blockData,
+	}, nil
+}
+
+// AddBlockAtPath adds a new block using positional addressing
+func (a *App) AddBlockAtPath(pageName string, insertPath BlockPath, content string) (map[string]interface{}, error) {
+	// Work with current state for incremental updates
+	page, exists := a.pages[pageName]
+	if !exists {
+		return nil, fmt.Errorf("page '%s' not found", pageName)
+	}
+	
+	// Create new block
+	newBlock := &parser.Block{
+		Content:  content,
+		Children: []*parser.Block{},
+	}
+	
+	// Parse the content into lines
+	lines := strings.Split(content, "\n")
+	newBlock.Lines = make([]parser.Line, len(lines))
+	for i, line := range lines {
+		newBlock.Lines[i] = parser.ParseLine(i+1, line)
+	}
+	
+	// Update block content to parse TODO info and segments
+	newBlock.SetContent(content)
+	
+	// Handle insertion based on path
+	if len(insertPath) == 0 {
+		return nil, fmt.Errorf("empty insertion path")
+	}
+	
+	if len(insertPath) == 1 {
+		// Top-level insertion
+		index := insertPath[0]
+		if index < 0 || index > len(page.Blocks) {
+			return nil, fmt.Errorf("invalid insertion index %d (max: %d)", index, len(page.Blocks))
+		}
+		
+		// Set depth for top-level
+		newBlock.Depth = 0
+		
+		// Insert at position
+		if index == len(page.Blocks) {
+			page.Blocks = append(page.Blocks, newBlock)
+		} else {
+			page.Blocks = append(page.Blocks[:index], 
+				append([]*parser.Block{newBlock}, page.Blocks[index:]...)...)
+		}
+	} else {
+		// Nested insertion - find parent
+		parentPath := insertPath[:len(insertPath)-1]
+		parent, err := FindBlockByPath(page.Blocks, parentPath)
+		if err != nil {
+			return nil, fmt.Errorf("parent not found: %w", err)
+		}
+		
+		// Set parent relationship
+		newBlock.Parent = parent
+		newBlock.Depth = parent.Depth + 1
+		
+		// Insert into parent's children
+		index := insertPath[len(insertPath)-1]
+		if index < 0 || index > len(parent.Children) {
+			return nil, fmt.Errorf("invalid insertion index %d (max: %d)", index, len(parent.Children))
+		}
+		
+		if index == len(parent.Children) {
+			parent.Children = append(parent.Children, newBlock)
+		} else {
+			parent.Children = append(parent.Children[:index], 
+				append([]*parser.Block{newBlock}, parent.Children[index:]...)...)
+		}
+	}
+	
+	// Save the page
+	if err := a.savePage(page); err != nil {
+		return nil, fmt.Errorf("failed to save page: %w", err)
+	}
+	
+	// Calculate path shifts for other blocks
+	shifts := CalculatePathShiftsAfterInsert(page.Blocks, insertPath)
+	
+	// Return delta for incremental update
+	blockData := BlockData{
+		Content:       newBlock.Content,
+		HTMLContent:   newBlock.RenderHTML(),
+		Segments:      convertSegments(newBlock.Segments),
+		Depth:         newBlock.Depth,
+		TodoState:     string(newBlock.TodoInfo.TodoState),
+		CheckboxState: string(newBlock.TodoInfo.CheckboxState),
+		Priority:      newBlock.TodoInfo.Priority,
+		Children:      []BlockData{}, // New block has no children
+	}
+	
+	delta := map[string]interface{}{
+		"action": "add",
+		"path":   insertPath,
+		"block":  blockData,
+		"shifts": shifts,
+	}
+	
+	// Update backlinks for any references in the new block
+	refs := extractPageReferences(content)
+	for _, ref := range refs {
+		a.addBacklink(ref, pageName)
+	}
+	
+	return delta, nil
+}
+
+// findBlockByID recursively searches for a block by ID
+func findBlockByID(blocks []*parser.Block, targetID string) *parser.Block {
+	for _, block := range blocks {
+		if block.ID == targetID {
+			return block
+		}
+		// Check children
+		if found := findBlockByID(block.Children, targetID); found != nil {
+			return found
+		}
+	}
+	return nil
 }

@@ -22,7 +22,7 @@ The CLI tool is excellent for testing and debugging parser logic.
 ### Run CLI
 ```bash
 # From project root
-go run cmd/seq2b/main.go testdata/pages
+go run cmd/seq2b/main.go testdata/library_test_0/pages
 ```
 
 ### CLI Output
@@ -34,10 +34,10 @@ go run cmd/seq2b/main.go testdata/pages
 ### CLI Usage
 ```bash
 # Single file
-go run cmd/seq2b/main.go testdata/pages/page-a.md
+go run cmd/seq2b/main.go testdata/library_test_0/pages/page-a.md
 
 # Directory
-go run cmd/seq2b/main.go testdata/pages
+go run cmd/seq2b/main.go testdata/library_test_0/pages
 ```
 
 ## Desktop App (Wails)
@@ -119,9 +119,13 @@ import "github.com/rehanog/seq2b/pkg/parser"
 ```
 
 ### Test Data Location
-Test data is located at:
-- `testdata/pages/` - Sample pages with links
-- `testdata/` - Various markdown test files
+Test data is organized in Logseq-style structure:
+```
+testdata/
+└── library_test_0/        # Test library
+    ├── pages/            # Markdown pages
+    └── assets/           # Images and attachments
+```
 
 ## Next Steps
 

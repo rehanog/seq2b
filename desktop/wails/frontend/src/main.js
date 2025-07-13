@@ -1,9 +1,68 @@
 import './style.css';
-import { GetPage, GetPageList, UpdateBlock } from '../wailsjs/go/main/App';
+import { GetPage, GetPageList, UpdateBlock, AddBlock, UpdateBlockAtPath, AddBlockAtPath } from '../wailsjs/go/main/App';
 
 // Application state
-let currentPage = 'Page A';
+let currentPage = getTodayPageName();
 let navigationHistory = [];
+
+// Path calculation utilities
+function getBlockPath(blockDiv) {
+    const path = [];
+    let current = blockDiv;
+    
+    while (current && current.classList.contains('block')) {
+        // Find index among siblings
+        const parent = current.parentNode;
+        const siblings = Array.from(parent.children).filter(child => 
+            child.classList.contains('block')
+        );
+        const index = siblings.indexOf(current);
+        
+        if (index !== -1) {
+            path.unshift(index); // Add to beginning
+        }
+        
+        // Move up to parent block
+        if (parent.classList.contains('block-children')) {
+            current = parent.parentNode; // Get parent block
+        } else {
+            // Reached top level
+            break;
+        }
+    }
+    
+    return path;
+}
+
+// Find block element by path
+function findBlockByPath(path) {
+    if (!path || path.length === 0) return null;
+    
+    let container = blocksContainer;
+    let blockDiv = null;
+    
+    for (let i = 0; i < path.length; i++) {
+        const index = path[i];
+        const blocks = Array.from(container.children).filter(child => 
+            child.classList.contains('block')
+        );
+        
+        if (index >= 0 && index < blocks.length) {
+            blockDiv = blocks[index];
+            
+            // If not last element, move to children container
+            if (i < path.length - 1) {
+                const childrenContainer = blockDiv.querySelector('.block-children');
+                if (!childrenContainer) return null;
+                container = childrenContainer;
+            }
+        } else {
+            return null;
+        }
+    }
+    
+    return blockDiv;
+}
 
 // DOM elements
 const pageTitle = document.getElementById('pageTitle');
@@ -21,6 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // Event listeners
 function setupEventListeners() {
     backButton.addEventListener('click', goBack);
+    
+    // Add home button listener
+    const homeButton = document.getElementById('homeButton');
+    if (homeButton) {
+        homeButton.addEventListener('click', goToToday);
+    }
 }
 
 // Load and display a page
@@ -115,8 +180,15 @@ function createBlockElement(block) {
     // Use segments if available, otherwise fall back to htmlContent
     if (block.segments && block.segments.length > 0) {
         textDiv.innerHTML = renderSegmentsToHTML(block.segments);
-    } else {
+    } else if (block.htmlContent) {
         textDiv.innerHTML = processLinksInHTML(block.htmlContent);
+    } else if (block.content) {
+        // If no segments or HTML, parse the content on the fly
+        const segments = parseMarkdownToSegments(block.content);
+        textDiv.innerHTML = renderSegmentsToHTML(segments);
+    } else {
+        // For empty blocks, add a zero-width space to ensure editability
+        textDiv.innerHTML = '\u200B';
     }
     
     // Store original content for editing
@@ -126,12 +198,20 @@ function createBlockElement(block) {
     textDiv.addEventListener('focus', function() {
         this.contentEditable = 'true'; // Enable editing
         this.classList.add('editing');
-        this.textContent = this.getAttribute('data-raw-content');
+        const rawContent = this.getAttribute('data-raw-content') || '';
+        this.textContent = rawContent;
+        
         // Place cursor at end
         const range = document.createRange();
         const sel = window.getSelection();
-        range.selectNodeContents(this);
-        range.collapse(false);
+        if (this.childNodes.length > 0) {
+            range.selectNodeContents(this);
+            range.collapse(false);
+        } else {
+            // For empty content, set cursor at beginning
+            range.setStart(this, 0);
+            range.collapse(true);
+        }
         sel.removeAllRanges();
         sel.addRange(range);
     });
@@ -153,7 +233,15 @@ function createBlockElement(block) {
             await saveBlockEdit(pageName, blockId, newContent, this);
         } else {
             // Just restore the HTML if no changes
-            this.innerHTML = processLinksInHTML(block.htmlContent);
+            if (block.segments && block.segments.length > 0) {
+                this.innerHTML = renderSegmentsToHTML(block.segments);
+            } else if (block.htmlContent) {
+                this.innerHTML = processLinksInHTML(block.htmlContent);
+            } else {
+                // Parse content on the fly for temporary blocks
+                const segments = parseMarkdownToSegments(this.getAttribute('data-raw-content'));
+                this.innerHTML = renderSegmentsToHTML(segments);
+            }
         }
         
         this.dataset.saving = 'false';
@@ -236,36 +324,78 @@ async function saveBlockEdit(pageName, blockId, newContent, textDiv) {
         // Store the new raw content
         textDiv.setAttribute('data-raw-content', newContent);
         
-        // Update the backend
-        await UpdateBlock(pageName, blockId, newContent);
+        // Get block path
+        const blockDiv = textDiv.closest('.block');
+        const path = getBlockPath(blockDiv);
         
-        // Get the updated page data to refresh HTML rendering
-        const pageData = await GetPage(pageName);
+        // Update the backend using path-based API
+        const delta = await UpdateBlockAtPath(pageName, path, newContent);
         
-        // Find the updated block in the page data
-        const findBlock = (blocks) => {
-            for (const block of blocks) {
-                if (block.id === blockId) return block;
-                const found = findBlock(block.children || []);
-                if (found) return found;
-            }
-            return null;
-        };
-        
-        const updatedBlock = findBlock(pageData.blocks);
-        if (updatedBlock) {
+        // Apply the delta update
+        if (delta && delta.action === 'update') {
+            const updatedBlock = delta.block;
+            
             // Update the HTML content without reloading the whole page
             if (updatedBlock.segments && updatedBlock.segments.length > 0) {
                 textDiv.innerHTML = renderSegmentsToHTML(updatedBlock.segments);
-            } else {
+            } else if (updatedBlock.htmlContent) {
                 textDiv.innerHTML = processLinksInHTML(updatedBlock.htmlContent);
+            } else if (updatedBlock.content) {
+                // Fallback: parse content on the fly if no segments or HTML
+                const segments = parseMarkdownToSegments(updatedBlock.content);
+                textDiv.innerHTML = renderSegmentsToHTML(segments);
+            } else {
+                // Last resort: use the raw content
+                textDiv.innerHTML = escapeHtml(newContent);
             }
+            
+            // Update TODO/checkbox state if changed
+            if (updatedBlock.todoState !== undefined || updatedBlock.checkboxState !== undefined) {
+                updateBlockPrefix(blockDiv, updatedBlock);
+            }
+        } else {
+            // Fallback to old API if new one fails
+            await UpdateBlock(pageName, blockId, newContent);
+            // Reload page to sync
+            await loadPage(pageName);
         }
         
     } catch (error) {
         console.error('Failed to save block:', error);
         // Revert to original content on error
         textDiv.textContent = textDiv.getAttribute('data-raw-content');
+    }
+}
+
+// Update block prefix (TODO state, checkbox, etc)
+function updateBlockPrefix(blockDiv, blockData) {
+    const prefixDiv = blockDiv.querySelector('.block-prefix');
+    if (!prefixDiv) return;
+    
+    // Clear existing prefix content except bullet
+    const bullet = prefixDiv.querySelector('.block-bullet');
+    prefixDiv.innerHTML = '';
+    if (bullet) prefixDiv.appendChild(bullet);
+    
+    // Add TODO state or checkbox
+    if (blockData.todoState) {
+        const todoSpan = document.createElement('span');
+        todoSpan.className = `todo-state todo-${blockData.todoState.toLowerCase()}`;
+        todoSpan.textContent = blockData.todoState;
+        if (blockData.priority) {
+            const prioritySpan = document.createElement('span');
+            prioritySpan.className = 'todo-priority';
+            prioritySpan.textContent = `[#${blockData.priority}]`;
+            todoSpan.appendChild(prioritySpan);
+        }
+        prefixDiv.appendChild(todoSpan);
+    } else if (blockData.checkboxState) {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'block-checkbox';
+        checkbox.checked = blockData.checkboxState === '[x]';
+        checkbox.disabled = true;
+        prefixDiv.appendChild(checkbox);
     }
 }
 
@@ -291,6 +421,8 @@ function renderSegmentsToHTML(segments) {
                 return `<i>${escapeHtml(segment.content)}</i>`;
             case 'link':
                 return `<a href="#" class="page-link" onclick="navigateToPage('${escapeHtml(segment.target)}')">${escapeHtml(segment.content)}</a>`;
+            case 'image':
+                return `<img src="${escapeHtml(segment.target)}" alt="${escapeHtml(segment.alt || segment.content)}" class="embedded-image">`;
             case 'text':
             default:
                 return escapeHtml(segment.content);
@@ -303,6 +435,48 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Simple client-side markdown parser for temporary blocks
+function parseMarkdownToSegments(text) {
+    if (!text) return [];
+    
+    const segments = [];
+    let remaining = text;
+    
+    // Simple regex for links only (most common case for new blocks)
+    const linkPattern = /\[\[([^\]]+)\]\]/g;
+    let lastIndex = 0;
+    let match;
+    
+    while ((match = linkPattern.exec(text)) !== null) {
+        // Add text before the match
+        if (match.index > lastIndex) {
+            segments.push({
+                type: 'text',
+                content: text.substring(lastIndex, match.index)
+            });
+        }
+        
+        // Add the link
+        segments.push({
+            type: 'link',
+            content: match[1],
+            target: match[1]
+        });
+        
+        lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text
+    if (lastIndex < text.length) {
+        segments.push({
+            type: 'text',
+            content: text.substring(lastIndex)
+        });
+    }
+    
+    return segments.length > 0 ? segments : [{type: 'text', content: text}];
 }
 
 // Navigate to a page
@@ -326,6 +500,30 @@ function goBack() {
             backButton.disabled = true;
         }
     }
+}
+
+// Get today's page name in Logseq format
+function getTodayPageName() {
+    const today = new Date();
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = monthNames[today.getMonth()];
+    const day = today.getDate();
+    const year = today.getFullYear();
+    
+    // Add ordinal suffix
+    let suffix = "th";
+    if (day === 1 || day === 21 || day === 31) suffix = "st";
+    else if (day === 2 || day === 22) suffix = "nd";
+    else if (day === 3 || day === 23) suffix = "rd";
+    
+    return `${month} ${day}${suffix}, ${year}`;
+}
+
+// Go to today's journal page
+function goToToday() {
+    const todayPageName = getTodayPageName();
+    // Navigate to today's page
+    loadPage(todayPageName);
 }
 
 // Render backlinks
@@ -360,7 +558,7 @@ window.addEventListener('error', (event) => {
 });
 
 // Handle Enter key - split block at cursor
-function handleEnterKey(textDiv, blockDiv) {
+async function handleEnterKey(textDiv, blockDiv) {
     const selection = window.getSelection();
     const range = selection.getRangeAt(0);
     const textContent = textDiv.textContent;
@@ -382,62 +580,129 @@ function handleEnterKey(textDiv, blockDiv) {
     textDiv.textContent = beforeCursor;
     textDiv.blur(); // This will save the current block
     
-    // Create new block with text after cursor (or empty)
-    const newBlock = {
-        id: 'temp-' + Date.now(), // Temporary ID
-        content: afterCursor || '',
-        htmlContent: afterCursor || '',
-        depth: parseInt(blockDiv.getAttribute('data-depth')),
-        children: [],
-        todoState: '',
-        checkboxState: '',
-        priority: ''
-    };
-    
-    // Create the new block element
-    const newBlockElement = createBlockElement(newBlock);
-    
-    // Check if current block already has children
-    const childrenContainer = blockDiv.querySelector('.block-children');
-    
-    if (childrenContainer && afterCursor) {
-        // If has children AND we're moving text, insert as first child
-        childrenContainer.insertBefore(newBlockElement, childrenContainer.firstChild);
-        // Update the depth of the new block
-        newBlockElement.setAttribute('data-depth', parseInt(blockDiv.getAttribute('data-depth')) + 1);
-    } else {
-        // Otherwise insert after current block at same level
-        if (blockDiv.nextSibling) {
-            blockDiv.parentNode.insertBefore(newBlockElement, blockDiv.nextSibling);
-        } else {
-            blockDiv.parentNode.appendChild(newBlockElement);
-        }
-    }
-    
-    // Focus the new block
-    const newTextDiv = newBlockElement.querySelector('.block-text');
-    if (newTextDiv) {
-        // Store whether we should position cursor at start
-        const shouldPositionAtStart = afterCursor.length > 0;
+    try {
+        // Get current block path
+        const currentPath = getBlockPath(blockDiv);
+        const currentDepth = parseInt(blockDiv.getAttribute('data-depth'));
+        const pageName = currentPage;
         
-        setTimeout(() => {
-            // Enable contentEditable before focusing
-            newTextDiv.contentEditable = 'true';
-            newTextDiv.focus();
-            
-            // After focus handler converts to markdown, position cursor
-            if (shouldPositionAtStart) {
-                setTimeout(() => {
-                    const range = document.createRange();
-                    const sel = window.getSelection();
-                    range.setStart(newTextDiv.childNodes[0] || newTextDiv, 0);
-                    range.collapse(true);
-                    sel.removeAllRanges();
-                    sel.addRange(range);
-                }, 10);
+        // Determine where to insert the new block
+        let insertPath;
+        
+        // Check if current block already has children
+        const childrenContainer = blockDiv.querySelector('.block-children');
+        
+        if (childrenContainer && afterCursor) {
+            // If has children AND we're moving text, insert as first child
+            insertPath = [...currentPath, 0]; // Insert at beginning of children
+        } else {
+            // Otherwise insert after current block at same level
+            if (currentPath.length === 1) {
+                // Top level block - insert after it
+                insertPath = [currentPath[0] + 1];
+            } else {
+                // Nested block - insert after it in parent's children
+                const parentPath = currentPath.slice(0, -1);
+                const indexInParent = currentPath[currentPath.length - 1];
+                insertPath = [...parentPath, indexInParent + 1];
             }
-        }, 50);
+        }
+        
+        // Call backend to create the new block using positional API
+        const delta = await AddBlockAtPath(pageName, insertPath, afterCursor || '');
+        
+        // Apply incremental update instead of reloading
+        if (delta && delta.action === 'add') {
+            // Create the new block element
+            const newBlockElement = createBlockElement(delta.block);
+            
+            // Insert it at the correct position
+            if (insertPath.length === 1) {
+                // Top level insertion
+                const index = insertPath[0];
+                const blocks = Array.from(blocksContainer.children).filter(child => 
+                    child.classList.contains('block')
+                );
+                
+                if (index >= blocks.length) {
+                    blocksContainer.appendChild(newBlockElement);
+                } else {
+                    blocksContainer.insertBefore(newBlockElement, blocks[index]);
+                }
+            } else {
+                // Nested insertion
+                const parentPath = insertPath.slice(0, -1);
+                const parentBlock = findBlockByPath(parentPath);
+                
+                if (parentBlock) {
+                    let childrenContainer = parentBlock.querySelector('.block-children');
+                    if (!childrenContainer) {
+                        parentBlock.classList.add('block-has-children');
+                        childrenContainer = document.createElement('div');
+                        childrenContainer.className = 'block-children';
+                        parentBlock.appendChild(childrenContainer);
+                    }
+                    
+                    const index = insertPath[insertPath.length - 1];
+                    const children = Array.from(childrenContainer.children).filter(child => 
+                        child.classList.contains('block')
+                    );
+                    
+                    if (index >= children.length) {
+                        childrenContainer.appendChild(newBlockElement);
+                    } else {
+                        childrenContainer.insertBefore(newBlockElement, children[index]);
+                    }
+                }
+            }
+            
+            // Apply path shifts if any
+            if (delta.shifts && delta.shifts.length > 0) {
+                applyPathShifts(delta.shifts);
+            }
+            
+            // Focus the new block
+            const newTextDiv = newBlockElement.querySelector('.block-text');
+            if (newTextDiv) {
+                // Store whether we should position cursor at start
+                const shouldPositionAtStart = afterCursor.length > 0;
+                
+                // Enable contentEditable before focusing
+                newTextDiv.contentEditable = 'true';
+                newTextDiv.focus();
+                
+                // After focus handler converts to markdown, position cursor
+                if (shouldPositionAtStart && afterCursor) {
+                    setTimeout(() => {
+                        const range = document.createRange();
+                        const sel = window.getSelection();
+                        if (newTextDiv.childNodes.length > 0 && newTextDiv.childNodes[0]) {
+                            range.setStart(newTextDiv.childNodes[0], 0);
+                        } else {
+                            range.setStart(newTextDiv, 0);
+                        }
+                        range.collapse(true);
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                    }, 10);
+                }
+            }
+        } else {
+            // Fallback: reload the page
+            await loadPage(currentPage);
+        }
+    } catch (error) {
+        console.error('Failed to create new block:', error);
+        // Fallback: reload the page
+        await loadPage(currentPage);
     }
+}
+
+// Apply path shifts after insertion/deletion
+function applyPathShifts(shifts) {
+    // Path shifts are used to update any stored references
+    // For now, we don't store paths, so this is a no-op
+    // In the future, if we cache paths, we'd update them here
 }
 
 // Handle indent (Tab)
@@ -568,12 +833,16 @@ function handleArrowUp(textDiv, blockDiv) {
         const textLength = prevTextDiv.textContent.length;
         const newPos = Math.min(cursorPos, textLength);
         
-        if (prevTextDiv.childNodes[0]) {
+        if (prevTextDiv.childNodes.length > 0 && prevTextDiv.childNodes[0]) {
             range.setStart(prevTextDiv.childNodes[0], newPos);
             range.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(range);
+        } else {
+            // For empty content, set cursor at beginning
+            range.setStart(prevTextDiv, 0);
+            range.collapse(true);
         }
+        sel.removeAllRanges();
+        sel.addRange(range);
     }, 10);
 }
 
@@ -604,12 +873,16 @@ function handleArrowDown(textDiv, blockDiv) {
         const textLength = nextTextDiv.textContent.length;
         const newPos = Math.min(cursorPos, textLength);
         
-        if (nextTextDiv.childNodes[0]) {
+        if (nextTextDiv.childNodes.length > 0 && nextTextDiv.childNodes[0]) {
             range.setStart(nextTextDiv.childNodes[0], newPos);
             range.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(range);
+        } else {
+            // For empty content, set cursor at beginning
+            range.setStart(nextTextDiv, 0);
+            range.collapse(true);
         }
+        sel.removeAllRanges();
+        sel.addRange(range);
     }, 10);
 }
 

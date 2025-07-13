@@ -1,0 +1,28 @@
+# Page A
+
+- TODO [#A] Critical: Fix data loss bug in sync by [[Jan 15th, 2025]]
+- TODO [#A] Impor [[adsa]]
+- [[adsfadsf]]
+- 
+- 
+- DOING Implementing TODO features (started [[Jan 10th, 2025]])
+  - Task breakdown
+  - DONE Parse TODO states
+- WAITING For code review on [[Page B]] implementation since [[Jan 12th, 2025]]
+- CANCELED Old feature that's no longer needed
+- LATER Future enhancement planned for [[Feb 1st, 2025]]
+- NOW Fix the critical bug
+- Sprint planning
+- planning
+- [[asdfasd]]
+- 
+- asdfasdfa
+- 
+- 
+- I need to check [[Page B]] for compatibility
+  - Also see [[Page C]] for context
+  - Review meeting notes from [[Jan 11th, 2025]]
+- Another reference to [[Page B]] here
+- Meeting scheduled for [[Jan 14th, 2025]]
+- Project overview diagram: ![seq2b Logo](../assets/seq2b-logo.svg)
+- Deadline: [[Jan 20th, 2025]] for Phase 4 completion

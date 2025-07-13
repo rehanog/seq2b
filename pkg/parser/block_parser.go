@@ -29,7 +29,7 @@ import (
 
 // Block represents a Logseq block (can be multi-line with children)
 type Block struct {
-	ID       string    // Unique identifier (could be UUID or hash)
+	ID       string    // Unique identifier (deprecated - use positional addressing instead)
 	Lines    []Line    // All lines belonging to this block (ordered)
 	Children []*Block  // Ordered child blocks
 	Parent   *Block    // Parent block (nil for top-level)
@@ -64,6 +64,9 @@ func (b *Block) updateContent() {
 	}
 	b.Content = strings.Join(contents, "\n")
 	
+	// Clear cached HTML so it gets regenerated
+	b.HTMLContent = ""
+	
 	// Use already-parsed TODO information from the first line
 	if len(b.Lines) > 0 {
 		b.TodoInfo = b.Lines[0].TodoInfo
@@ -81,6 +84,9 @@ func (b *Block) updateContent() {
 // SetContent updates the block's content and reparses it
 func (b *Block) SetContent(newContent string) {
 	b.Content = newContent
+	
+	// Clear cached HTML so it gets regenerated
+	b.HTMLContent = ""
 	
 	// Update lines by re-parsing them
 	lines := strings.Split(newContent, "\n")

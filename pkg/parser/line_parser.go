@@ -127,3 +127,8 @@ func extractPageReferences(text string) []string {
 	
 	return references
 }
+
+// IsPageReference checks if a reference is a page (not a date)
+func IsPageReference(ref string) bool {
+	return !IsDatePage(ref)
+}

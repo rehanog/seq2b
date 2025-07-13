@@ -169,26 +169,26 @@ Clean up technical debt and improve code efficiency before adding new features.
 
 ### Phase 4: Daily Driver Features
 
-#### Step 4.1: Date Pages
-- [ ] Parse dates in standard format (YYYY-MM-DD, [[Jan 1st, 2025]], etc.)
-- [ ] Auto-create date pages like Logseq
-- [ ] Handle date page navigation and linking
-- [ ] Support journal-style daily notes
-- [ ] Write unit tests for date parsing
+#### Step 4.1: Date Pages ✅ COMPLETED
+- [x] Parse dates in standard format (YYYY-MM-DD, [[Jan 1st, 2025]], etc.)
+- [x] Auto-create date pages like Logseq
+- [x] Handle date page navigation and linking
+- [x] Support journal-style daily notes
+- [x] Write unit tests for date parsing
 
-#### Step 4.2: Home Page with Today's Date
-- [ ] Default to today's date page on startup
-- [ ] Add "Home" button in GUI to return to today
-- [ ] Auto-create today's page if it doesn't exist
-- [ ] Handle date page formatting and structure
-- [ ] Write unit tests for home page logic
+#### Step 4.2: Home Page with Today's Date ✅ COMPLETED
+- [x] Default to today's date page on startup
+- [x] Add "Home" button in GUI to return to today
+- [x] Auto-create today's page if it doesn't exist
+- [x] Handle date page formatting and structure
+- [x] Write unit tests for home page logic (reused date parser tests)
 
-#### Step 4.3: Embedded Images
-- [ ] Parse image markdown syntax ![alt](path/to/image.png)
-- [ ] Handle relative and absolute image paths
-- [ ] Add image rendering in GUI
-- [ ] Support common image formats (PNG, JPG, GIF, SVG)
-- [ ] Write unit tests for image parsing
+#### Step 4.3: Embedded Images ✅ COMPLETED
+- [x] Parse image markdown syntax ![alt](path/to/image.png)
+- [x] Handle relative and absolute image paths
+- [x] Add image rendering in GUI
+- [x] Support common image formats (PNG, JPG, GIF, SVG)
+- [x] Write unit tests for image parsing
 
 #### Phase 4 Goal
 Complete the minimum viable daily driver with:

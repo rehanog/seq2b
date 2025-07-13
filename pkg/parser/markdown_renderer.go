@@ -35,13 +35,15 @@ const (
 	SegmentBold
 	SegmentItalic
 	SegmentLink
+	SegmentImage
 )
 
 // Segment represents a parsed text segment
 type Segment struct {
 	Type    SegmentType
 	Content string
-	Target  string // For links, the target page
+	Target  string // For links, the target page; for images, the image path
+	Alt     string // For images, the alt text
 }
 
 // RenderToHTML converts markdown text to HTML
@@ -66,6 +68,10 @@ func RenderToHTML(text string) string {
 	linkPattern := regexp.MustCompile(`\[\[(.*?)\]\]`)
 	html = linkPattern.ReplaceAllString(html, `<a href="$1">$1</a>`)
 	
+	// Convert images: ![alt](src) -> <img src="src" alt="alt">
+	imagePattern := regexp.MustCompile(`!\[(.*?)\]\((.*?)\)`)
+	html = imagePattern.ReplaceAllString(html, `<img src="$2" alt="$1">`)
+	
 	return html
 }
 
@@ -78,8 +84,8 @@ func ParseMarkdownSegments(text string) []Segment {
 	segments := []Segment{}
 	remaining := text
 	
-	// Combined pattern to match bold, italic, or links
-	pattern := regexp.MustCompile(`(\*\*.*?\*\*|\*[^*]+?\*|\[\[.*?\]\])`)
+	// Combined pattern to match bold, italic, links, or images
+	pattern := regexp.MustCompile(`(\*\*.*?\*\*|\*[^*]+?\*|\[\[.*?\]\]|!\[.*?\]\(.*?\))`)
 	
 	for {
 		loc := pattern.FindStringIndex(remaining)
@@ -127,6 +133,17 @@ func ParseMarkdownSegments(text string) []Segment {
 				Content: target,
 				Target:  target,
 			})
+		} else if strings.HasPrefix(match, "![") {
+			// Image: ![alt text](path/to/image.png)
+			imagePattern := regexp.MustCompile(`!\[(.*?)\]\((.*?)\)`)
+			if matches := imagePattern.FindStringSubmatch(match); len(matches) == 3 {
+				segments = append(segments, Segment{
+					Type:    SegmentImage,
+					Alt:     matches[1],
+					Target:  matches[2],
+					Content: matches[1], // Use alt text as content
+				})
+			}
 		}
 		
 		// Continue with remaining text
