@@ -144,11 +144,19 @@ type PageData struct {
 	Backlinks []BacklinkData `json:"backlinks"`
 }
 
+// SegmentData represents a text segment for frontend
+type SegmentData struct {
+	Type    string `json:"type"`    // "text", "bold", "italic", "link"
+	Content string `json:"content"`
+	Target  string `json:"target,omitempty"` // For links
+}
+
 // BlockData represents block data for frontend
 type BlockData struct {
 	ID string `json:"id"`
 	Content string `json:"content"`
-	HTMLContent string `json:"htmlContent"`
+	HTMLContent string `json:"htmlContent"` // Deprecated - will be removed
+	Segments []SegmentData `json:"segments"`
 	Depth int `json:"depth"`
 	Children []BlockData `json:"children"`
 	TodoState string `json:"todoState"`
@@ -170,12 +178,36 @@ func convertBlocks(blocks []*parser.Block) []BlockData {
 		result[i] = BlockData{
 			ID: block.ID,
 			Content: block.Content,
-			HTMLContent: block.RenderHTML(),
+			HTMLContent: block.RenderHTML(), // Deprecated - kept for compatibility
+			Segments: convertSegments(block.Segments),
 			Depth: block.Depth,
 			Children: convertBlocks(block.Children),
 			TodoState: string(block.TodoInfo.TodoState),
 			CheckboxState: string(block.TodoInfo.CheckboxState),
 			Priority: block.TodoInfo.Priority,
+		}
+	}
+	return result
+}
+
+// convertSegments converts parser segments to frontend segments
+func convertSegments(segments []parser.Segment) []SegmentData {
+	result := make([]SegmentData, len(segments))
+	for i, seg := range segments {
+		segType := "text"
+		switch seg.Type {
+		case parser.SegmentBold:
+			segType = "bold"
+		case parser.SegmentItalic:
+			segType = "italic"
+		case parser.SegmentLink:
+			segType = "link"
+		}
+		
+		result[i] = SegmentData{
+			Type:    segType,
+			Content: seg.Content,
+			Target:  seg.Target,
 		}
 	}
 	return result

@@ -63,12 +63,17 @@ Building a high-performance Logseq replacement in Go with focus on:
 
 ### JJ (Jujutsu) Workflow - IMPORTANT!
 When committing and pushing with jj:
-1. Create a snapshot: `jj describe -m "Your commit message"`
-2. Commit the changes: `jj commit -m "Your commit message"`
-3. **CRITICAL**: Move the main bookmark to the new commit: `jj bookmark set main -r @-`
-4. Push to GitHub: `jj git push --branch main`
+1. Commit the changes: `jj commit -m "Your commit message"`
+2. **CRITICAL**: Move the main bookmark to the new commit: `jj bookmark set main -r @-`
+3. Push to GitHub: `jj git push` or `git push origin main`
+
+**Alternative if you want to edit the commit message later:**
+1. Create a snapshot: `jj describe -m "Your commit message"` (this updates current @ working copy)
+2. To edit later: `jj describe @- -m "New message"`
 
 **Why this happens**: After `jj commit`, you're on a new empty working copy (@), and the commit you just made is at @-. The main bookmark needs to be explicitly moved to @- before pushing, otherwise it stays pointing at the old commit.
+
+**DO NOT**: Try to use `git push` without moving the main bookmark first - git will complain about "not on a branch"
 
 ### Current Progress
 - [x] Initial project setup

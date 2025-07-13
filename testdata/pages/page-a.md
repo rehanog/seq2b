@@ -1,7 +1,7 @@
 # Page A
 
-- TODO [#A] Critical: Fix data loss bug in syncgit l
-- DONE d Set u
+- TODO [#A] Critical: Fix data loss bug in
+- TODO [#A] Important: Review [[Page A]] implementation
 - DOING Implementing TODO features
   - T
   - DONE Parse TODO states
@@ -13,4 +13,4 @@
 - I need to check [[Page B]] for
   - Also see [[Page C]] for context
 - Another reference to [[Page B]] here
-- This block has no references
+- Nested 

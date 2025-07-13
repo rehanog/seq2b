@@ -111,7 +111,13 @@ function createBlockElement(block) {
     const textDiv = document.createElement('div');
     textDiv.className = 'block-text';
     textDiv.contentEditable = 'false'; // Start with editing disabled
-    textDiv.innerHTML = processLinksInHTML(block.htmlContent);
+    
+    // Use segments if available, otherwise fall back to htmlContent
+    if (block.segments && block.segments.length > 0) {
+        textDiv.innerHTML = renderSegmentsToHTML(block.segments);
+    } else {
+        textDiv.innerHTML = processLinksInHTML(block.htmlContent);
+    }
     
     // Store original content for editing
     textDiv.setAttribute('data-raw-content', block.content);
@@ -249,7 +255,11 @@ async function saveBlockEdit(pageName, blockId, newContent, textDiv) {
         const updatedBlock = findBlock(pageData.blocks);
         if (updatedBlock) {
             // Update the HTML content without reloading the whole page
-            textDiv.innerHTML = processLinksInHTML(updatedBlock.htmlContent);
+            if (updatedBlock.segments && updatedBlock.segments.length > 0) {
+                textDiv.innerHTML = renderSegmentsToHTML(updatedBlock.segments);
+            } else {
+                textDiv.innerHTML = processLinksInHTML(updatedBlock.htmlContent);
+            }
         }
         
     } catch (error) {
@@ -265,6 +275,34 @@ function processLinksInHTML(html) {
     return html.replace(/<a href="([^"]+)">([^<]+)<\/a>/g, (match, href, text) => {
         return `<a href="#" class="page-link" onclick="navigateToPage('${text}')">${text}</a>`;
     });
+}
+
+// Render segments to HTML
+function renderSegmentsToHTML(segments) {
+    if (!segments || segments.length === 0) {
+        return '';
+    }
+    
+    return segments.map(segment => {
+        switch (segment.type) {
+            case 'bold':
+                return `<b>${escapeHtml(segment.content)}</b>`;
+            case 'italic':
+                return `<i>${escapeHtml(segment.content)}</i>`;
+            case 'link':
+                return `<a href="#" class="page-link" onclick="navigateToPage('${escapeHtml(segment.target)}')">${escapeHtml(segment.content)}</a>`;
+            case 'text':
+            default:
+                return escapeHtml(segment.content);
+        }
+    }).join('');
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Navigate to a page

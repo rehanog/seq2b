@@ -16,10 +16,27 @@ export namespace main {
 	        this.count = source["count"];
 	    }
 	}
+	export class SegmentData {
+	    type: string;
+	    content: string;
+	    target?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SegmentData(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.type = source["type"];
+	        this.content = source["content"];
+	        this.target = source["target"];
+	    }
+	}
 	export class BlockData {
 	    id: string;
 	    content: string;
 	    htmlContent: string;
+	    segments: SegmentData[];
 	    depth: number;
 	    children: BlockData[];
 	    todoState: string;
@@ -35,6 +52,7 @@ export namespace main {
 	        this.id = source["id"];
 	        this.content = source["content"];
 	        this.htmlContent = source["htmlContent"];
+	        this.segments = this.convertValues(source["segments"], SegmentData);
 	        this.depth = source["depth"];
 	        this.children = this.convertValues(source["children"], BlockData);
 	        this.todoState = source["todoState"];

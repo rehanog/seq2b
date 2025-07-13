@@ -13,6 +13,7 @@ desktop/wails/build/
 desktop/wails/frontend/node_modules/
 desktop/wails/frontend/dist/
 desktop/wails/test-build
+desktop/wails/wails
 
 # Test binary
 *.test
