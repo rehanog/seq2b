@@ -23,6 +23,6 @@
   - Also see [[Page C]] for context
   - Review meeting notes from [[Jan 11th, 2025]]
 - Another reference to [[Page B]] here
-- Meeting scheduled for [[Jan 14th, 2025]]
+- Meeting scheduled for [[Jan 14th, 2025]]€
 - Project overview diagram: ![seq2b Logo](../assets/seq2b-logo.svg)
 - Deadline: [[Jan 20th, 2025]] for Phase 4 completion

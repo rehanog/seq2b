@@ -97,3 +97,15 @@ See EXPLANATION.md for detailed guidelines on:
 - One-page chunks to avoid scrolling
 - Always including filenames above code snippets
 - Visual diagrams and architecture focus
+
+## Test-Driven Development (TDD) for Bug Fixes
+When fixing bugs, ALWAYS follow this workflow:
+1. **Write a failing test first** that reproduces the bug
+2. **Verify the test fails** with the current code
+3. **Fix the code** to make the test pass
+4. **Verify the test now passes**
+
+This ensures:
+- The test actually captures the bug
+- The fix actually solves the problem
+- We have regression test coverage

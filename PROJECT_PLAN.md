@@ -88,29 +88,29 @@
 - [x] Add comprehensive usage documentation (RUNNING.md)
 - [x] Verify CLI and desktop functionality
 
-### Phase 2.7: Open Source Publishing & Website
+### Phase 2.7: Open Source Publishing & Website ✅ MOSTLY COMPLETED
 - [x] Add MIT license to all source files
 - [x] Create main LICENSE file
-- [ ] Prepare repository for GitHub
-  - [ ] Add comprehensive README.md
+- [x] Prepare repository for GitHub
+  - [x] Add comprehensive README.md
   - [ ] Create CONTRIBUTING.md
   - [ ] Add issue templates
   - [ ] Configure GitHub Actions for CI/CD
-- [ ] Create GitHub repository
-  - [ ] Push code to GitHub
+- [x] Create GitHub repository
+  - [x] Push code to GitHub
   - [ ] Set up branch protection
-  - [ ] Enable GitHub Issues
+  - [x] Enable GitHub Issues
   - [ ] Configure security alerts
-- [ ] Setup GitHub Pages for website
-  - [ ] Create docs/ directory
-  - [ ] Design landing page
-  - [ ] Add documentation
+- [x] Setup GitHub Pages for website
+  - [x] Create docs/ directory
+  - [x] Design landing page
+  - [x] Add documentation
   - [ ] Configure custom domain (optional)
-- [ ] Create project blog
-  - [ ] Setup Jekyll or Hugo
-  - [ ] Write announcement post
-  - [ ] Document journey from CLI to GUI
-  - [ ] Share architecture decisions
+- [x] Create project blog
+  - [x] Setup Jekyll
+  - [x] Write announcement post
+  - [x] Document journey from CLI to GUI
+  - [x] Share architecture decisions
 - [ ] Community Setup
   - [ ] Create Discord/Discussions
   - [ ] Add Code of Conduct
@@ -136,35 +136,35 @@
 #### Phase 3 Goal
 Enable basic editing of blocks so users can modify their notes without external editors.
 
-### Phase 3.5: Technical Debt Refactoring
+### Phase 3.5: Technical Debt Refactoring ✅ COMPLETED
 
-#### Parser Architecture Refactoring
-- [ ] Restructure parser files for single responsibility:
-  - [ ] Create file_parser.go - Contains ParseFile() and ParseDirectory() orchestration
-  - [ ] Create line_parser.go - Full parsing of line-level features (TODO, tags, etc.)
-  - [ ] Rename block.go to block_parser.go - Pure structural organization of pre-parsed lines
-  - [ ] Create markdown_renderer.go - Move RenderToHTML() and formatting functions
-- [ ] Update parsing flow:
-  - [ ] Line parser fully parses line-level features in initial pass
-  - [ ] Line struct carries parsed data (TodoInfo, etc.)
-  - [ ] Block parser reorganizes pre-parsed lines into hierarchical structure
-  - [ ] Blocks reference already-parsed data (no re-parsing needed)
-- [ ] Benefits: Clean separation of concerns, single-pass parsing, better performance
+#### Parser Architecture Refactoring ✅ COMPLETED
+- [x] Restructure parser files for single responsibility:
+  - [x] Create file_parser.go - Contains ParseFile() and ParseDirectory() orchestration
+  - [x] Create line_parser.go - Full parsing of line-level features (TODO, tags, etc.)
+  - [x] Rename block.go to block_parser.go - Pure structural organization of pre-parsed lines
+  - [x] Create markdown_renderer.go - Move RenderToHTML() and formatting functions
+- [x] Update parsing flow:
+  - [x] Line parser fully parses line-level features in initial pass
+  - [x] Line struct carries parsed data (TodoInfo, etc.)
+  - [x] Block parser reorganizes pre-parsed lines into hierarchical structure
+  - [x] Blocks reference already-parsed data (no re-parsing needed)
+- [x] Benefits: Clean separation of concerns, single-pass parsing, better performance
 
-#### Additional Refactoring (To be identified during code walkthrough)
-- [ ] Separate parsing from rendering:
-  - [ ] Change parser to output structured segments (text, bold, link, etc.) instead of HTML
-  - [ ] Remove RenderToHTML() from Go parser
-  - [ ] Move HTML generation to frontend JavaScript
-  - [ ] Benefits: Clean separation of concerns, flexible rendering, testable parsing
-- [ ] Implement incremental updates for editing:
-  - [ ] Return edit deltas from backend (added/removed/updated blocks)
-  - [ ] Update only affected DOM elements instead of full page reload
-  - [ ] Handle structural changes (block splits, merges, indentation)
-  - [ ] Update backlinks incrementally
-  - [ ] Benefits: Much faster editing, no UI flicker, maintains scroll position
+#### Additional Refactoring ✅ COMPLETED
+- [x] Separate parsing from rendering:
+  - [x] Change parser to output structured segments (text, bold, link, etc.) instead of HTML
+  - [x] Remove RenderToHTML() from Go parser
+  - [x] Move HTML generation to frontend JavaScript
+  - [x] Benefits: Clean separation of concerns, flexible rendering, testable parsing
+- [x] Implement incremental updates for editing:
+  - [x] Return edit deltas from backend (added/removed/updated blocks)
+  - [x] Update only affected DOM elements instead of full page reload
+  - [x] Handle structural changes (block splits, merges, indentation)
+  - [x] Update backlinks incrementally
+  - [x] Benefits: Much faster editing, no UI flicker, maintains scroll position
 
-#### Phase 3.5 Goal
+#### Phase 3.5 Goal ✅ ACHIEVED
 Clean up technical debt and improve code efficiency before adding new features.
 
 ### Phase 4: Daily Driver Features

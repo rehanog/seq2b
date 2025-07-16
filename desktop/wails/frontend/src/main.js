@@ -95,7 +95,16 @@ async function loadPage(pageName) {
         blocksContainer.innerHTML = '';
         backlinksContainer.innerHTML = '';
         
+        // Update navigation BEFORE loading (so it works even if page is auto-created)
+        if (currentPage !== pageName) {
+            navigationHistory.push(currentPage);
+            backButton.disabled = false;
+        }
+        
         const pageData = await GetPage(pageName);
+        
+        // Update current page BEFORE rendering (so blocks get correct page name)
+        currentPage = pageName;
         
         // Update page title
         pageTitle.textContent = pageData.title;
@@ -106,18 +115,27 @@ async function loadPage(pageName) {
         // Render backlinks
         renderBacklinks(pageData.backlinks);
         
-        // Update navigation
-        if (currentPage !== pageName) {
-            navigationHistory.push(currentPage);
-            backButton.disabled = false;
-        }
-        
-        currentPage = pageName;
         loadingDiv.style.display = 'none';
+        
+        // Focus on first block if it's empty (new page)
+        if (pageData.blocks.length === 1 && !pageData.blocks[0].content.trim()) {
+            const firstBlock = blocksContainer.querySelector('.block-text');
+            if (firstBlock) {
+                firstBlock.contentEditable = 'true';
+                firstBlock.focus();
+            }
+        }
         
     } catch (error) {
         console.error('Error loading page:', error);
         loadingDiv.innerHTML = `Error loading page: ${error.message || error}`;
+        // Revert navigation on error
+        if (navigationHistory.length > 0 && navigationHistory[navigationHistory.length - 1] === currentPage) {
+            navigationHistory.pop();
+            if (navigationHistory.length === 0) {
+                backButton.disabled = true;
+            }
+        }
     }
 }
 
@@ -480,13 +498,31 @@ function parseMarkdownToSegments(text) {
 }
 
 // Navigate to a page
-window.navigateToPage = function(pageName) {
+window.navigateToPage = async function(pageName) {
+    // Save any active edits before navigating
+    const editingBlock = document.querySelector('.block-text.editing');
+    if (editingBlock) {
+        // Trigger blur to save
+        editingBlock.blur();
+        // Wait a bit for save to complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
     loadPage(pageName);
 };
 
 // Go back to previous page
-function goBack() {
+async function goBack() {
     if (navigationHistory.length > 0) {
+        // Save any active edits before navigating
+        const editingBlock = document.querySelector('.block-text.editing');
+        if (editingBlock) {
+            // Trigger blur to save
+            editingBlock.blur();
+            // Wait a bit for save to complete
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
         const previousPage = navigationHistory.pop();
         
         // Don't add to history when going back
@@ -520,7 +556,16 @@ function getTodayPageName() {
 }
 
 // Go to today's journal page
-function goToToday() {
+async function goToToday() {
+    // Save any active edits before navigating
+    const editingBlock = document.querySelector('.block-text.editing');
+    if (editingBlock) {
+        // Trigger blur to save
+        editingBlock.blur();
+        // Wait a bit for save to complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
     const todayPageName = getTodayPageName();
     // Navigate to today's page
     loadPage(todayPageName);

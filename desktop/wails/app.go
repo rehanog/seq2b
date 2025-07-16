@@ -96,25 +96,28 @@ func (a *App) GetPage(pageName string) (*PageData, error) {
 	
 	page, exists := a.pages[pageName]
 	if !exists {
-		// Check if this is a date page request
+		// Auto-create the page
 		if parser.IsDatePage(pageName) {
-			// Auto-create the date page
+			// Create date page with special handling
 			if err := a.createDatePage(pageName); err != nil {
 				return nil, fmt.Errorf("failed to create date page: %w", err)
 			}
-			
-			// Refresh pages to load the new page
-			if err := a.RefreshPages(); err != nil {
-				return nil, fmt.Errorf("failed to refresh after creating date page: %w", err)
-			}
-			
-			// Try to get the page again
-			page, exists = a.pages[pageName]
-			if !exists {
-				return nil, fmt.Errorf("date page not found after creation: %s", pageName)
-			}
 		} else {
-			return nil, fmt.Errorf("page '%s' not found", pageName)
+			// Create regular page
+			if err := a.createPage(pageName); err != nil {
+				return nil, fmt.Errorf("failed to create page: %w", err)
+			}
+		}
+		
+		// Refresh pages to load the new page
+		if err := a.RefreshPages(); err != nil {
+			return nil, fmt.Errorf("failed to refresh after creating page: %w", err)
+		}
+		
+		// Try to get the page again
+		page, exists = a.pages[pageName]
+		if !exists {
+			return nil, fmt.Errorf("page not found after creation: %s", pageName)
 		}
 	}
 	
@@ -284,6 +287,7 @@ func (a *App) UpdateBlockAtPath(pageName string, path BlockPath, newContent stri
 		return nil, fmt.Errorf("failed to save page: %w", err)
 	}
 	
+	
 	// Return delta for incremental update
 	blockData := BlockData{
 		Content:       block.Content,
@@ -402,8 +406,22 @@ func (a *App) savePage(page *parser.Page) error {
 	// Reconstruct the markdown content
 	content := a.pageToMarkdown(page)
 	
-	// Determine the filename (convert title to filename)
-	filename := parser.TitleToFilename(page.Title)
+	// Determine the filename
+	var filename string
+	if parser.IsDatePage(page.Title) {
+		// For date pages, parse the title and use ISO format
+		date, err := parser.ParseDateTitle(page.Title)
+		if err != nil {
+			// Fall back to regular filename conversion
+			filename = parser.TitleToFilename(page.Title)
+		} else {
+			filename = parser.GetDatePageFilename(date)
+		}
+	} else {
+		// Regular pages use title-based filenames
+		filename = parser.TitleToFilename(page.Title)
+	}
+	
 	filePath := filepath.Join(a.currentDir, filename)
 	
 	// Write to file
@@ -421,7 +439,12 @@ func (a *App) pageToMarkdown(page *parser.Page) string {
 	// Convert blocks to markdown
 	a.blocksToMarkdown(page.Blocks, &lines, 0)
 	
-	return strings.Join(lines, "\n")
+	// Join lines and ensure trailing newline
+	content := strings.Join(lines, "\n")
+	if len(content) > 0 && content[len(content)-1] != '\n' {
+		content += "\n"
+	}
+	return content
 }
 
 // blocksToMarkdown recursively converts blocks to markdown lines
@@ -445,6 +468,38 @@ func (a *App) blocksToMarkdown(blocks []*parser.Block, lines *[]string, depth in
 			a.blocksToMarkdown(block.Children, lines, depth+1)
 		}
 	}
+}
+
+// createPage creates a new regular page with default content
+func (a *App) createPage(pageTitle string) error {
+	// Generate the filename
+	filename := parser.TitleToFilename(pageTitle)
+	filePath := filepath.Join(a.currentDir, filename)
+	
+	// Check if file already exists
+	if _, err := os.Stat(filePath); err == nil {
+		// File already exists, no need to create
+		return nil
+	}
+	
+	// Create the file
+	file, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer file.Close()
+	
+	// Write default content
+	content := fmt.Sprintf(`# %s
+
+- 
+`, pageTitle)
+	
+	if _, err := file.WriteString(content); err != nil {
+		return fmt.Errorf("failed to write content: %w", err)
+	}
+	
+	return nil
 }
 
 // createDatePage creates a new date page with default content
