@@ -36,10 +36,16 @@ type Block struct {
 	Depth    int       // Nesting depth (0 = top-level)
 	
 	// Computed properties
-	Content     string      // Combined content from all lines
-	TodoInfo    TodoInfo    // TODO state and checkbox information
-	HTMLContent string      // Rendered HTML (cached)
-	Segments    []Segment   // Parsed markdown segments (for frontend rendering)
+	Content     string              // Combined content from all lines
+	TodoInfo    TodoInfo            // TODO state and checkbox information
+	HTMLContent string              // Rendered HTML (cached)
+	Segments    []Segment           // Parsed markdown segments (for frontend rendering)
+	
+	// Logseq metadata
+	BlockID     string              // id:: UUID if present
+	Properties  map[string]string   // key:: value properties
+	Tags        []string            // #tag references
+	References  []string            // [[page]] references
 }
 
 // Page represents a complete Logseq page
@@ -59,8 +65,28 @@ type Page struct {
 // updateContent updates the combined content from all lines
 func (b *Block) updateContent() {
 	contents := []string{}
+	b.References = []string{}
+	b.Tags = []string{}
+	b.Properties = make(map[string]string)
+	
 	for _, line := range b.Lines {
 		contents = append(contents, line.Content)
+		
+		// Collect metadata from all lines
+		if line.BlockID != "" {
+			b.BlockID = line.BlockID
+		}
+		
+		// Merge properties from all lines
+		for k, v := range line.Properties {
+			b.Properties[k] = v
+		}
+		
+		// Collect all tags
+		b.Tags = append(b.Tags, line.Tags...)
+		
+		// Collect all references
+		b.References = append(b.References, line.References...)
 	}
 	b.Content = strings.Join(contents, "\n")
 	
@@ -96,18 +122,8 @@ func (b *Block) SetContent(newContent string) {
 		b.Lines[i] = ParseLine(i+1, line)
 	}
 	
-	// Use the parsed TODO information from first line
-	if len(b.Lines) > 0 {
-		b.TodoInfo = b.Lines[0].TodoInfo
-	}
-	
-	// Parse markdown segments for frontend rendering
-	// Remove TODO prefix if present before parsing segments
-	contentForSegments := b.Content
-	if b.TodoInfo.TodoState != TodoStateNone || b.TodoInfo.CheckboxState != CheckboxNone {
-		contentForSegments = RemoveTodoPrefix(b.Content)
-	}
-	b.Segments = ParseMarkdownSegments(contentForSegments)
+	// Update all metadata from the parsed lines
+	b.updateContent()
 }
 
 // GetAllBlocks returns a flat list of all blocks in the page

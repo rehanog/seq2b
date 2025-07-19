@@ -36,7 +36,9 @@ const (
 	TodoStateDoing    TodoState = "DOING"
 	TodoStateDone     TodoState = "DONE"
 	TodoStateWaiting  TodoState = "WAITING"
+	TodoStateWait     TodoState = "WAIT"      // Logseq uses WAIT
 	TodoStateCanceled TodoState = "CANCELED"
+	TodoStateCancelled TodoState = "CANCELLED" // Logseq uses CANCELLED
 	TodoStateLater    TodoState = "LATER"
 	TodoStateNow      TodoState = "NOW"
 )
@@ -60,12 +62,12 @@ type TodoInfo struct {
 
 var (
 	// Regex to match TODO states at the beginning of a block
-	// Matches: TODO, DOING, DONE, WAITING, CANCELED, LATER, NOW
-	todoStateRegex = regexp.MustCompile(`^(TODO|DOING|DONE|WAITING|CANCELED|LATER|NOW)\s+`)
+	// Matches: TODO, DOING, DONE, WAITING, WAIT, CANCELED, CANCELLED, LATER, NOW
+	todoStateRegex = regexp.MustCompile(`^(TODO|DOING|DONE|WAITING|WAIT|CANCELED|CANCELLED|LATER|NOW)\s+`)
 	
 	// Regex to match TODO with priority
 	// Matches: TODO [#A], DONE [#B], etc.
-	todoPriorityRegex = regexp.MustCompile(`^(TODO|DOING|DONE|WAITING|CANCELED|LATER|NOW)\s+\[#([A-Z])\]\s+`)
+	todoPriorityRegex = regexp.MustCompile(`^(TODO|DOING|DONE|WAITING|WAIT|CANCELED|CANCELLED|LATER|NOW)\s+\[#([A-Z])\]\s+`)
 	
 	// Regex to match checkboxes
 	// Matches: [ ], [x], [X], [-]

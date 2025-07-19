@@ -598,6 +598,22 @@ function renderSegmentsToHTML(segments) {
                     // Regular image (absolute URL or other path)
                     return `<img src="${escapeHtml(segment.target)}" alt="${escapeHtml(segment.alt || segment.content)}" class="embedded-image">`;
                 }
+            case 'tag':
+                return `<span class="tag">#${escapeHtml(segment.content)}</span>`;
+            case 'blockRef':
+                return `<span class="block-reference" title="Block reference: ${escapeHtml(segment.target)}">((${escapeHtml(segment.content)}))</span>`;
+            case 'property':
+                return `<span class="property">${escapeHtml(segment.content)}</span>`;
+            case 'blockId':
+                return `<span class="block-id" title="Block ID: ${escapeHtml(segment.target)}">${escapeHtml(segment.content)}</span>`;
+            case 'query':
+                return `<span class="query-block">${escapeHtml(segment.content)}</span>`;
+            case 'embed':
+                return `<span class="embed-block">${escapeHtml(segment.content)}</span>`;
+            case 'strikethrough':
+                return `<del>${escapeHtml(segment.content)}</del>`;
+            case 'highlight':
+                return `<mark>${escapeHtml(segment.content)}</mark>`;
             case 'text':
             default:
                 return escapeHtml(segment.content);

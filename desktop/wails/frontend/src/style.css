@@ -352,6 +352,16 @@ main {
     color: #d32f2f;
 }
 
+.todo-wait {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.todo-cancelled {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
 .todo-priority {
     margin-left: 0.25rem;
     font-weight: 700;
@@ -433,4 +443,50 @@ main {
     background: #ffe0e0;
     padding: 10px;
     color: #cc0000;
+}
+
+/* Logseq feature styles */
+.tag {
+    color: #6b9bd1;
+    background-color: rgba(107, 155, 209, 0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.block-reference {
+    color: #9a6dd7;
+    background-color: rgba(154, 109, 215, 0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.85em;
+    cursor: help;
+}
+
+.property {
+    color: #7aa2f7;
+    background-color: rgba(122, 162, 247, 0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.block-id {
+    color: #888;
+    font-family: monospace;
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
+.query-block, .embed-block {
+    display: inline-block;
+    background-color: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    color: #f39c12;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.85em;
+    margin: 2px 0;
 }

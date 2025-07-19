@@ -199,12 +199,12 @@ Complete the minimum viable daily driver with:
 ### Phase 5: Logseq-like Page Structure 🚧 IN PROGRESS
 **Goal**: Make the UI more closely match Logseq's page layout and interaction patterns
 
-#### Step 5.1: Move Backlinks to Page Bottom
-- [ ] Remove separate backlinks sidebar
-- [ ] Add "Linked References" section at bottom of page
-- [ ] Style with subtle separator (not bordered box)
-- [ ] Show source page and block context
-- [ ] Make references clickable for navigation
+#### Step 5.1: Move Backlinks to Page Bottom ✅ COMPLETED
+- [x] Remove separate backlinks sidebar
+- [x] Add "Linked References" section at bottom of page
+- [x] Style with subtle separator (not bordered box)
+- [x] Show source page and block context
+- [x] Make references clickable for navigation
 
 #### Step 5.2: Add Unlinked References
 - [ ] Search for text mentions of current page name
@@ -224,35 +224,43 @@ Complete the minimum viable daily driver with:
 - [ ] Improve visual hierarchy for deep nesting
 - [ ] Add block actions menu (on hover)
 
-### Phase 6: Logseq Markdown Compatibility Audit
-**Goal**: Document and implement missing Logseq markdown features
+### Phase 6: Logseq Markdown Compatibility - Safe Import
+**Goal**: Import Logseq files without breaking - parse but don't necessarily render all features
 
-#### Step 6.1: Compatibility Assessment
-- [ ] Create comprehensive feature matrix
-- [ ] Test against real Logseq markdown files
-- [ ] Document differences and limitations
-- [ ] Prioritize missing features by usage
+#### Key Strategy
+- **Parse but don't render** unsupported features initially
+- **Preserve original content** even if we can't display it properly
+- **Show placeholders** for complex features (e.g., "Query: {{query}}")
+- **Log warnings** for unsupported syntax but don't crash
 
-#### Step 6.2: Block References & Embeds
-- [ ] Generate block IDs on demand (id:: UUID)
-- [ ] Parse ((block-id)) references
-- [ ] Implement block embedding/transclusion
-- [ ] Add {{embed ((id))}} syntax
-- [ ] Add {{embed [[page]]}} for page embeds
+#### Step 6.1: Compatibility Assessment ✅ COMPLETED
+- [x] Create comprehensive feature matrix (LOGSEQ_COMPATIBILITY.md)
+- [x] Test against real Logseq markdown files
+- [x] Document differences and limitations
+- [x] Prioritize missing features by usage
 
-#### Step 6.3: Tags and Properties
-- [ ] Parse #tag syntax inline
-- [ ] Support tag pages and tag queries
-- [ ] Parse block properties (key:: value)
-- [ ] Support scheduled:: and deadline:: properties
-- [ ] Add alias:: for page aliases
+#### Step 6.2: Safe Import - Block IDs & References
+- [ ] Parse `id:: UUID` without breaking
+- [ ] Store block IDs but don't generate new ones
+- [ ] Parse `((block-id))` as plain text or placeholder
+- [ ] Show placeholder: "[Block reference: block-id]"
+- [ ] Don't crash on invalid references
 
-#### Step 6.4: Basic Queries
-- [ ] Implement {{query}} block syntax
-- [ ] Support simple TODO queries
-- [ ] Add tag-based queries
-- [ ] Basic AND/OR query logic
-- [ ] Query result rendering
+#### Step 6.3: Safe Import - Properties & Tags
+- [ ] Parse `property:: value` syntax
+- [ ] Store properties in block metadata
+- [ ] Parse `#tag` syntax without breaking
+- [ ] Display tags as plain text initially
+- [ ] Handle SCHEDULED: and DEADLINE: dates
+- [ ] Parse extended TODO states (NOW, DOING, LATER, etc.)
+
+#### Step 6.4: Safe Import - Complex Features
+- [ ] Parse `{{query}}` blocks → show "Query: [query text]"
+- [ ] Parse `{{embed}}` blocks → show "Embed: [content]"
+- [ ] Parse tables → preserve as code blocks initially
+- [ ] Parse `~~strikethrough~~` → show as plain text
+- [ ] Parse `==highlight==` → show as plain text
+- [ ] Log all unsupported features for user awareness
 
 ### Phase 7: Persistence & Performance
 **Goal**: Quick startup without full reparse + performance benchmarks

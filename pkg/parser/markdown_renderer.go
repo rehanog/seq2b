@@ -36,6 +36,14 @@ const (
 	SegmentItalic
 	SegmentLink
 	SegmentImage
+	SegmentTag          // #tag
+	SegmentBlockRef     // ((block-id))
+	SegmentProperty     // key:: value
+	SegmentBlockID      // id:: UUID
+	SegmentQuery        // {{query}}
+	SegmentEmbed        // {{embed}}
+	SegmentStrikethrough // ~~text~~
+	SegmentHighlight    // ==text== or ^^text^^
 )
 
 // Segment represents a parsed text segment
@@ -84,8 +92,23 @@ func ParseMarkdownSegments(text string) []Segment {
 	segments := []Segment{}
 	remaining := text
 	
-	// Combined pattern to match bold, italic, links, or images
-	pattern := regexp.MustCompile(`(\*\*.*?\*\*|\*[^*]+?\*|\[\[.*?\]\]|!\[.*?\]\(.*?\))`)
+	// Combined pattern to match all markdown and Logseq features
+	// Order matters - more specific patterns first
+	pattern := regexp.MustCompile(`(` +
+		`\{\{query.*?\}\}|` +                    // {{query}} blocks
+		`\{\{embed.*?\}\}|` +                    // {{embed}} blocks
+		`\(\([a-fA-F0-9\-]+\)\)|` +              // ((block-id)) references
+		`~~.*?~~|` +                             // ~~strikethrough~~
+		`==.*?==|` +                             // ==highlight==
+		`\^\^.*?\^\^|` +                         // ^^highlight^^
+		`#[a-zA-Z0-9\-_/]+|` +                   // #tags
+		`\bid::\s*[a-fA-F0-9\-]+|` +             // id:: UUID
+		`[a-zA-Z][a-zA-Z0-9\-_]*::\s*[^\n]+|` + // property:: value
+		`\*\*.*?\*\*|` +                         // **bold**
+		`\*[^*]+?\*|` +                          // *italic*
+		`\[\[.*?\]\]|` +                         // [[page link]]
+		`!\[.*?\]\(.*?\)` +                      // ![image](url)
+		`)`)
 	
 	for {
 		loc := pattern.FindStringIndex(remaining)
@@ -111,21 +134,85 @@ func ParseMarkdownSegments(text string) []Segment {
 		// Extract and classify the match
 		match := remaining[loc[0]:loc[1]]
 		
-		if strings.HasPrefix(match, "**") && strings.HasSuffix(match, "**") {
+		// Classify the match based on its pattern
+		switch {
+		case strings.HasPrefix(match, "{{query"):
+			segments = append(segments, Segment{
+				Type:    SegmentQuery,
+				Content: match,
+			})
+		case strings.HasPrefix(match, "{{embed"):
+			segments = append(segments, Segment{
+				Type:    SegmentEmbed,
+				Content: match,
+			})
+		case strings.HasPrefix(match, "((") && strings.HasSuffix(match, "))"):
+			blockId := match[2 : len(match)-2]
+			segments = append(segments, Segment{
+				Type:    SegmentBlockRef,
+				Content: blockId,
+				Target:  blockId,
+			})
+		case strings.HasPrefix(match, "~~") && strings.HasSuffix(match, "~~"):
+			content := match[2 : len(match)-2]
+			segments = append(segments, Segment{
+				Type:    SegmentStrikethrough,
+				Content: content,
+			})
+		case strings.HasPrefix(match, "==") && strings.HasSuffix(match, "=="):
+			content := match[2 : len(match)-2]
+			segments = append(segments, Segment{
+				Type:    SegmentHighlight,
+				Content: content,
+			})
+		case strings.HasPrefix(match, "^^") && strings.HasSuffix(match, "^^"):
+			content := match[2 : len(match)-2]
+			segments = append(segments, Segment{
+				Type:    SegmentHighlight,
+				Content: content,
+			})
+		case strings.HasPrefix(match, "#"):
+			tag := match[1:] // Remove the #
+			segments = append(segments, Segment{
+				Type:    SegmentTag,
+				Content: tag,
+				Target:  tag,
+			})
+		case strings.Contains(match, "id::"):
+			// Extract the UUID part
+			parts := strings.SplitN(match, "::", 2)
+			if len(parts) == 2 {
+				id := strings.TrimSpace(parts[1])
+				segments = append(segments, Segment{
+					Type:    SegmentBlockID,
+					Content: match,
+					Target:  id,
+				})
+			}
+		case strings.Contains(match, "::") && !strings.Contains(match, "id::"):
+			// Property
+			parts := strings.SplitN(match, "::", 2)
+			if len(parts) == 2 {
+				segments = append(segments, Segment{
+					Type:    SegmentProperty,
+					Content: match,
+				})
+			}
+		case strings.HasPrefix(match, "**") && strings.HasSuffix(match, "**"):
 			// Bold text
 			content := match[2 : len(match)-2]
 			segments = append(segments, Segment{
 				Type:    SegmentBold,
 				Content: content,
 			})
-		} else if strings.HasPrefix(match, "*") && strings.HasSuffix(match, "*") {
+		case strings.HasPrefix(match, "*") && strings.HasSuffix(match, "*"):
 			// Italic text
 			content := match[1 : len(match)-1]
 			segments = append(segments, Segment{
 				Type:    SegmentItalic,
 				Content: content,
 			})
-		} else if strings.HasPrefix(match, "[[") && strings.HasSuffix(match, "]]") {
+		case strings.HasPrefix(match, "[[") && strings.HasSuffix(match, "]]"):
 			// Link
 			target := match[2 : len(match)-2]
 			segments = append(segments, Segment{
@@ -133,7 +220,7 @@ func ParseMarkdownSegments(text string) []Segment {
 				Content: target,
 				Target:  target,
 			})
-		} else if strings.HasPrefix(match, "![") {
+		case strings.HasPrefix(match, "!["):
 			// Image: ![alt text](path/to/image.png)
 			imagePattern := regexp.MustCompile(`!\[(.*?)\]\((.*?)\)`)
 			if matches := imagePattern.FindStringSubmatch(match); len(matches) == 3 {
@@ -144,6 +231,12 @@ func ParseMarkdownSegments(text string) []Segment {
 					Content: matches[1], // Use alt text as content
 				})
 			}
+		default:
+			// Fallback - treat as text
+			segments = append(segments, Segment{
+				Type:    SegmentText,
+				Content: match,
+			})
 		}
 		
 		// Continue with remaining text
