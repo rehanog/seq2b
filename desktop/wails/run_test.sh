@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Run automated tests for seq2b
+
+echo "=== Running seq2b Automated Tests ==="
+echo ""
+echo "This script would normally:"
+echo "1. Start the Wails app with -test-mode flag"
+echo "2. Run automated browser tests using Playwright or similar"
+echo "3. Capture outputs to frontend/test-output/"
+echo "4. Run the verification script"
+echo ""
+echo "Since I cannot launch GUI apps or control browsers,"
+echo "you need to manually run:"
+echo ""
+echo "1. Start the app in test mode:"
+echo "   go run github.com/wailsapp/wails/v2/cmd/wails@latest dev -- -test-mode"
+echo ""
+echo "2. In your browser at http://localhost:34115, perform these tests:"
+echo "   - Create a link [[page a]] and click it"
+echo "   - Edit a block with [[new page]] and click the link"
+echo "   - Add a link to [[Page B]] and check backlinks on Page B"
+echo ""
+echo "3. After testing, run the verification:"
+echo "   go run verify_test_output.go"
+echo ""
+echo "The test outputs will be in frontend/test-output/"

@@ -109,3 +109,18 @@ This ensures:
 - The test actually captures the bug
 - The fix actually solves the problem
 - We have regression test coverage
+
+## Architecture Decision Records (ADRs)
+**IMPORTANT**: Before making any major architectural changes or design decisions:
+1. **Create an ADR** in `/docs/adr/` following the template
+2. **Name format**: `NNN-description-YYYY-MM-DD.md` (e.g., `001-testing-strategy-2025-01-18.md`)
+3. **Document**:
+   - Context and problem statement
+   - Decision and rationale
+   - Implementation approach
+   - Consequences (positive, negative, neutral)
+   - Alternatives considered
+4. **Get approval** before implementing major changes
+
+ADRs help maintain a clear history of architectural decisions and their reasoning.
+See `/docs/adr/template.md` for the standard format.

@@ -379,3 +379,28 @@ main {
     border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+
+.embedded-image.loading-asset {
+    min-width: 200px;
+    min-height: 100px;
+    background: #f0f0f0;
+    border: 2px dashed #ccc;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.embedded-image.loading-asset::after {
+    content: "Loading image...";
+    color: #999;
+    font-size: 14px;
+    font-style: italic;
+}
+
+.embedded-image.failed-asset {
+    border: 2px solid #ff0000;
+    background: #ffe0e0;
+    padding: 10px;
+    color: #cc0000;
+}

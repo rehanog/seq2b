@@ -15,6 +15,9 @@ desktop/wails/frontend/dist/
 desktop/wails/test-build
 desktop/wails/wails
 
+# Test mode output
+desktop/wails/frontend/test-output/
+
 # Test binary
 *.test
 

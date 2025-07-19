@@ -10,6 +10,18 @@ export function AddBlockAtPath(arg1, arg2, arg3) {
   return window['go']['main']['App']['AddBlockAtPath'](arg1, arg2, arg3);
 }
 
+export function CaptureDOM(arg1, arg2) {
+  return window['go']['main']['App']['CaptureDOM'](arg1, arg2);
+}
+
+export function CaptureNavigationHistory(arg1) {
+  return window['go']['main']['App']['CaptureNavigationHistory'](arg1);
+}
+
+export function GetAsset(arg1) {
+  return window['go']['main']['App']['GetAsset'](arg1);
+}
+
 export function GetBacklinks(arg1) {
   return window['go']['main']['App']['GetBacklinks'](arg1);
 }
@@ -22,8 +34,24 @@ export function GetPageList() {
   return window['go']['main']['App']['GetPageList']();
 }
 
+export function InitTestCapture() {
+  return window['go']['main']['App']['InitTestCapture']();
+}
+
+export function IsTestMode() {
+  return window['go']['main']['App']['IsTestMode']();
+}
+
 export function LoadDirectory(arg1) {
   return window['go']['main']['App']['LoadDirectory'](arg1);
+}
+
+export function LogResourceError(arg1) {
+  return window['go']['main']['App']['LogResourceError'](arg1);
+}
+
+export function LogUserAction(arg1) {
+  return window['go']['main']['App']['LogUserAction'](arg1);
 }
 
 export function RefreshPages() {

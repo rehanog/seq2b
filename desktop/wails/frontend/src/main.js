@@ -1,9 +1,77 @@
 import './style.css';
-import { GetPage, GetPageList, UpdateBlock, AddBlock, UpdateBlockAtPath, AddBlockAtPath } from '../wailsjs/go/main/App';
+import { GetPage, GetPageList, UpdateBlock, AddBlock, UpdateBlockAtPath, AddBlockAtPath, IsTestMode, CaptureDOM, LogUserAction, CaptureNavigationHistory, GetAsset, LogResourceError } from '../wailsjs/go/main/App';
 
 // Application state
 let currentPage = getTodayPageName();
 let navigationHistory = [];
+let testMode = false;
+
+// Test mode utilities
+async function checkTestMode() {
+    try {
+        testMode = await IsTestMode();
+        if (testMode) {
+            console.log('Test mode enabled - capturing outputs');
+            setupResourceErrorMonitoring();
+        }
+    } catch (err) {
+        console.error('Failed to check test mode:', err);
+    }
+}
+
+// Setup resource error monitoring for test mode
+function setupResourceErrorMonitoring() {
+    // Monitor image loading errors
+    document.addEventListener('error', async function(e) {
+        if (e.target.tagName === 'IMG' && testMode) {
+            try {
+                await LogResourceError({
+                    type: 'image',
+                    src: e.target.src,
+                    originalSrc: e.target.getAttribute('src') || e.target.getAttribute('data-asset-path'),
+                    alt: e.target.alt,
+                    message: 'Failed to load image',
+                    naturalWidth: e.target.naturalWidth,
+                    naturalHeight: e.target.naturalHeight,
+                    complete: e.target.complete
+                });
+            } catch (err) {
+                console.error('Failed to log resource error:', err);
+            }
+        }
+    }, true);
+}
+
+async function captureCurrentDOM() {
+    if (!testMode) return;
+    
+    try {
+        const html = document.documentElement.outerHTML;
+        await CaptureDOM(currentPage, html);
+    } catch (err) {
+        console.error('Failed to capture DOM:', err);
+    }
+}
+
+async function logAction(action) {
+    if (!testMode) return;
+    
+    try {
+        await LogUserAction(action);
+    } catch (err) {
+        console.error('Failed to log action:', err);
+    }
+}
+
+async function captureNavHistory() {
+    if (!testMode) return;
+    
+    try {
+        await CaptureNavigationHistory([...navigationHistory, currentPage]);
+    } catch (err) {
+        console.error('Failed to capture navigation history:', err);
+    }
+}
 
 // Path calculation utilities
 function getBlockPath(blockDiv) {
@@ -72,7 +140,8 @@ const backlinksContainer = document.getElementById('backlinksList');
 const loadingDiv = document.getElementById('loading');
 
 // Initialize the application
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkTestMode();
     loadPage(currentPage);
     setupEventListeners();
 });
@@ -126,6 +195,18 @@ async function loadPage(pageName) {
             }
         }
         
+        // Load any assets that need the GetAsset API
+        await loadAssets();
+        
+        // Capture DOM and navigation history in test mode
+        await captureCurrentDOM();
+        await captureNavHistory();
+        
+        // Validate all images loaded correctly in test mode
+        if (testMode) {
+            await validateAllImages();
+        }
+        
     } catch (error) {
         console.error('Error loading page:', error);
         loadingDiv.innerHTML = `Error loading page: ${error.message || error}`;
@@ -134,6 +215,66 @@ async function loadPage(pageName) {
             navigationHistory.pop();
             if (navigationHistory.length === 0) {
                 backButton.disabled = true;
+            }
+        }
+    }
+}
+
+// Load assets that need the GetAsset API
+async function loadAssets() {
+    const assetImages = document.querySelectorAll('img[data-asset-path]');
+    
+    for (const img of assetImages) {
+        const assetPath = img.getAttribute('data-asset-path');
+        if (assetPath) {
+            try {
+                // If GetAsset is available, use it
+                if (typeof GetAsset === 'function') {
+                    const assetData = await GetAsset(assetPath);
+                    
+                    // If it's SVG (text), create a data URL
+                    if (assetPath.endsWith('.svg')) {
+                        img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(assetData);
+                    } else {
+                        // For other formats, assume it's already a data URL from backend
+                        img.src = assetData;
+                    }
+                    
+                    img.classList.remove('loading-asset');
+                    img.removeAttribute('data-asset-path');
+                } else {
+                    // Fallback if GetAsset is not available
+                    console.warn('GetAsset not available, image will not load:', assetPath);
+                }
+            } catch (err) {
+                console.error('Failed to load asset:', assetPath, err);
+                img.alt = img.alt + ' (failed to load)';
+                img.classList.add('failed-asset');
+            }
+        }
+    }
+}
+
+// Validate all images loaded correctly (for test mode)
+async function validateAllImages() {
+    const images = document.querySelectorAll('img');
+    for (const img of images) {
+        // Check if image failed to load
+        if (!img.complete || img.naturalWidth === 0) {
+            try {
+                await LogResourceError({
+                    type: 'image_validation_failed',
+                    src: img.src,
+                    originalSrc: img.getAttribute('src') || img.getAttribute('data-asset-path'),
+                    alt: img.alt,
+                    message: 'Image not loaded properly during validation',
+                    complete: img.complete,
+                    naturalWidth: img.naturalWidth,
+                    naturalHeight: img.naturalHeight,
+                    classList: Array.from(img.classList)
+                });
+            } catch (err) {
+                console.error('Failed to log image validation error:', err);
             }
         }
     }
@@ -339,6 +480,9 @@ function createBlockElement(block) {
 // Save block edit
 async function saveBlockEdit(pageName, blockId, newContent, textDiv) {
     try {
+        // Log edit action
+        await logAction(`Edit block in ${pageName}: "${newContent.substring(0, 50)}..."`);
+        
         // Store the new raw content
         textDiv.setAttribute('data-raw-content', newContent);
         
@@ -440,7 +584,15 @@ function renderSegmentsToHTML(segments) {
             case 'link':
                 return `<a href="#" class="page-link" onclick="navigateToPage('${escapeHtml(segment.target)}')">${escapeHtml(segment.content)}</a>`;
             case 'image':
-                return `<img src="${escapeHtml(segment.target)}" alt="${escapeHtml(segment.alt || segment.content)}" class="embedded-image">`;
+                // Check if this is a relative asset path
+                if (segment.target && segment.target.startsWith('../assets/')) {
+                    // Transform to use asset loading
+                    const assetPath = segment.target.substring('../assets/'.length);
+                    return `<img data-asset-path="${escapeHtml(assetPath)}" alt="${escapeHtml(segment.alt || segment.content)}" class="embedded-image loading-asset">`;
+                } else {
+                    // Regular image (absolute URL or other path)
+                    return `<img src="${escapeHtml(segment.target)}" alt="${escapeHtml(segment.alt || segment.content)}" class="embedded-image">`;
+                }
             case 'text':
             default:
                 return escapeHtml(segment.content);
@@ -460,14 +612,13 @@ function parseMarkdownToSegments(text) {
     if (!text) return [];
     
     const segments = [];
-    let remaining = text;
     
-    // Simple regex for links only (most common case for new blocks)
-    const linkPattern = /\[\[([^\]]+)\]\]/g;
+    // Combined pattern for links and images
+    const pattern = /(\[\[([^\]]+)\]\]|!\[([^\]]*)\]\(([^)]+)\))/g;
     let lastIndex = 0;
     let match;
     
-    while ((match = linkPattern.exec(text)) !== null) {
+    while ((match = pattern.exec(text)) !== null) {
         // Add text before the match
         if (match.index > lastIndex) {
             segments.push({
@@ -476,12 +627,23 @@ function parseMarkdownToSegments(text) {
             });
         }
         
-        // Add the link
-        segments.push({
-            type: 'link',
-            content: match[1],
-            target: match[1]
-        });
+        // Check if it's an image or a link
+        if (match[0].startsWith('![')) {
+            // Image: match[3] is alt text, match[4] is src
+            segments.push({
+                type: 'image',
+                content: match[3] || '', // alt text
+                alt: match[3] || '',
+                target: match[4]
+            });
+        } else {
+            // Link: match[2] is the link target
+            segments.push({
+                type: 'link',
+                content: match[2],
+                target: match[2]
+            });
+        }
         
         lastIndex = match.index + match[0].length;
     }
@@ -499,6 +661,9 @@ function parseMarkdownToSegments(text) {
 
 // Navigate to a page
 window.navigateToPage = async function(pageName) {
+    // Log navigation action
+    await logAction(`Navigate to page: ${pageName}`);
+    
     // Save any active edits before navigating
     const editingBlock = document.querySelector('.block-text.editing');
     if (editingBlock) {

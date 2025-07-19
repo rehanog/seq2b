@@ -25,6 +25,7 @@ package main
 import (
 	"context"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -40,14 +41,17 @@ import (
 type App struct {
 	ctx context.Context
 	pages map[string]*parser.Page
+	pageNameMap map[string]string // lowercase -> actual case mapping
 	backlinks *parser.BacklinkIndex
 	currentDir string
+	TestMode bool // Enable output capture for testing
 }
 
 // NewApp creates a new App application struct
 func NewApp() *App {
 	return &App{
 		pages: make(map[string]*parser.Page),
+		pageNameMap: make(map[string]string),
 	}
 }
 
@@ -55,6 +59,9 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	
+	// Initialize test capture if enabled
+	a.InitTestCapture()
 	
 	// Load default directory - look for testdata in parent directories
 	defaultDir := "../../testdata/library_test_0/pages"
@@ -75,6 +82,12 @@ func (a *App) LoadDirectory(dirPath string) error {
 	a.pages = result.Pages
 	a.backlinks = result.Backlinks
 	
+	// Build case-insensitive lookup map
+	a.pageNameMap = make(map[string]string)
+	for pageName := range a.pages {
+		a.pageNameMap[strings.ToLower(pageName)] = pageName
+	}
+	
 	return nil
 }
 
@@ -94,7 +107,16 @@ func (a *App) GetPage(pageName string) (*PageData, error) {
 		fmt.Printf("Warning: failed to refresh pages: %v\n", err)
 	}
 	
+	// Try exact match first
 	page, exists := a.pages[pageName]
+	if !exists {
+		// Try case-insensitive lookup
+		if actualName, found := a.pageNameMap[strings.ToLower(pageName)]; found {
+			page = a.pages[actualName]
+			exists = true
+		}
+	}
+	
 	if !exists {
 		// Auto-create the page
 		if parser.IsDatePage(pageName) {
@@ -114,22 +136,38 @@ func (a *App) GetPage(pageName string) (*PageData, error) {
 			return nil, fmt.Errorf("failed to refresh after creating page: %w", err)
 		}
 		
-		// Try to get the page again
+		// Try to get the page again with case-insensitive lookup
 		page, exists = a.pages[pageName]
+		if !exists {
+			// Try case-insensitive lookup
+			if actualName, found := a.pageNameMap[strings.ToLower(pageName)]; found {
+				page = a.pages[actualName]
+				exists = true
+			}
+		}
 		if !exists {
 			return nil, fmt.Errorf("page not found after creation: %s", pageName)
 		}
 	}
 	
-	// Get backlinks for this page
-	backlinks := a.backlinks.GetBacklinks(pageName)
+	// Get backlinks for this page (use actual page name for correct lookup)
+	backlinks := a.backlinks.GetBacklinks(page.Title)
 	
-	return &PageData{
+	result := &PageData{
 		Name: pageName,
 		Title: page.Title,
 		Blocks: convertBlocks(page.Blocks),
 		Backlinks: convertBacklinks(backlinks),
-	}, nil
+	}
+	
+	// Log API call if in test mode
+	if a.TestMode && testCapture != nil {
+		testCapture.LogAPICall("GetPage", 
+			map[string]string{"pageName": pageName}, 
+			map[string]interface{}{"data": result, "error": nil})
+	}
+	
+	return result, nil
 }
 
 // GetPageList returns all available pages
@@ -148,7 +186,13 @@ func (a *App) GetPageList() []string {
 
 // GetBacklinks returns backlinks for a page
 func (a *App) GetBacklinks(pageName string) map[string][]string {
-	backlinks := a.backlinks.GetBacklinks(pageName)
+	// Use case-insensitive lookup to find actual page name
+	actualPageName := pageName
+	if actualName, found := a.pageNameMap[strings.ToLower(pageName)]; found {
+		actualPageName = actualName
+	}
+	
+	backlinks := a.backlinks.GetBacklinks(actualPageName)
 	result := make(map[string][]string)
 	
 	for sourcePage, refs := range backlinks {
@@ -818,4 +862,55 @@ func findBlockByID(blocks []*parser.Block, targetID string) *parser.Block {
 		}
 	}
 	return nil
+}
+
+// GetAsset serves an asset file from the library directory
+func (a *App) GetAsset(assetPath string) (string, error) {
+	// Security: prevent directory traversal attacks
+	if strings.Contains(assetPath, "..") || strings.HasPrefix(assetPath, "/") {
+		return "", fmt.Errorf("invalid asset path")
+	}
+	
+	// Construct full path - assets are siblings to pages directory
+	assetsDir := filepath.Join(filepath.Dir(a.currentDir), "assets")
+	fullPath := filepath.Join(assetsDir, assetPath)
+	
+	// Verify the path is still within the assets directory
+	absPath, err := filepath.Abs(fullPath)
+	if err != nil {
+		return "", err
+	}
+	absAssetsDir, err := filepath.Abs(assetsDir)
+	if err != nil {
+		return "", err
+	}
+	if !strings.HasPrefix(absPath, absAssetsDir) {
+		return "", fmt.Errorf("invalid asset path: outside assets directory")
+	}
+	
+	// Read the file
+	data, err := os.ReadFile(fullPath)
+	if err != nil {
+		return "", fmt.Errorf("asset not found: %w", err)
+	}
+	
+	// For SVG files, return as-is (they're text-based)
+	if strings.HasSuffix(assetPath, ".svg") {
+		return string(data), nil
+	}
+	
+	// For binary images, encode as base64 data URL
+	mimeType := "application/octet-stream"
+	switch {
+	case strings.HasSuffix(assetPath, ".png"):
+		mimeType = "image/png"
+	case strings.HasSuffix(assetPath, ".jpg") || strings.HasSuffix(assetPath, ".jpeg"):
+		mimeType = "image/jpeg"
+	case strings.HasSuffix(assetPath, ".gif"):
+		mimeType = "image/gif"
+	case strings.HasSuffix(assetPath, ".webp"):
+		mimeType = "image/webp"
+	}
+	
+	return fmt.Sprintf("data:%s;base64,%s", mimeType, base64.StdEncoding.EncodeToString(data)), nil
 }
