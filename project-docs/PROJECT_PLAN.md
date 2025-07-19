@@ -206,19 +206,13 @@ Complete the minimum viable daily driver with:
 - [x] Show source page and block context
 - [x] Make references clickable for navigation
 
-#### Step 5.2: Add Unlinked References
-- [ ] Search for text mentions of current page name
-- [ ] Display unlinked mentions below linked references
-- [ ] Add ability to convert unlinked to linked
-- [ ] Optimize search performance for large vaults
-
-#### Step 5.3: Page Properties Display
+#### Step 5.2: Page Properties Display
 - [ ] Parse page-level properties (tags::, alias::, etc.)
 - [ ] Display properties at top of page
 - [ ] Support both YAML frontmatter and key:: value syntax
 - [ ] Make properties editable
 
-#### Step 5.4: Enhanced Block Rendering
+#### Step 5.3: Enhanced Block Rendering (Critical for Migration)
 - [ ] Add collapse/expand for blocks with children
 - [ ] Show block reference count indicators
 - [ ] Improve visual hierarchy for deep nesting
@@ -405,8 +399,45 @@ type Reference struct {
 - Table-driven tests for multiple cases
 - Benchmark functions: `BenchmarkXxx(b *testing.B)`
 
+## Critical Features for Logseq Migration
+
+These are the absolute minimum features required for existing Logseq users to migrate:
+
+1. **Phase 6: Logseq Markdown Compatibility** - Must be able to import existing files without data loss
+2. **Phase 7: Persistence & Performance** - Must handle large vaults (10,000+ pages) without stuttering
+3. **Local Git Versioning** - Auto-commit changes locally (without sync) for version history
+4. **Block collapse/expand** (Phase 5.3) - Core navigation feature users expect
+
+Non-critical but expected:
+- Page properties (Phase 5.2) - Nice for organization but not blocking
+- PDF annotations (Phase 8.2) - Important for academic users but not universal
+
+## Future Release Features
+
+### Future Release 1: Sync
+- **Git/JJ Sync System** (was Phase 9)
+  - Remote sync with conflict resolution
+  - Multi-device access
+
+### Future Release 2: Extensibility
+- **Plugin System** (was Phase 10)
+  - WASM sandbox
+  - Plugin marketplace
+  - Custom themes
+
+### Future Release 3: Enhanced Discovery
+- **Unlinked References**
+  - Search for text mentions
+  - Convert to linked references
+- **Graph View**
+  - Visual page connections
+  - Interactive navigation
+- **Advanced Search**
+  - Full-text with highlighting
+  - Date range filtering
+
 ## Next Steps
-1. Set up Go module structure
-2. Implement basic markdown parser with tests
-3. Create test suite with Logseq sample data
-4. Design storage schema
+1. Complete Phase 5 (skip unlinked references)
+2. Focus on Phase 6 (Logseq compatibility) 
+3. Implement local Git versioning (simplified from Phase 9)
+4. Complete Phase 7 (Performance for 10k+ pages)

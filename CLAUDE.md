@@ -8,6 +8,8 @@ Building a high-performance Logseq replacement in Go with focus on:
 - AI integration as first-class citizen
 - Minimal feature set (no bloat)
 
+**PRIMARY TARGET**: Enable existing Logseq users to migrate as soon as possible. Focus on core features that block migration, not nice-to-haves.
+
 ## Current Status
 - Go environment set up
 - Basic project structure created
@@ -30,19 +32,23 @@ Building a high-performance Logseq replacement in Go with focus on:
   - Avoid git commands for branching/commits - use jj instead
 
 ## Commands to Run
-- Build: `go build -o seq2b cmd/seq2b/main.go`
+- Build GUI: `./scripts/build_seq2b.sh` (creates binary in `bin/`)
+- Run GUI Dev: `cd desktop/wails && wails dev`
 - Test: `go test ./...`
-- Run: `go run cmd/seq2b/main.go [file]`
+- Run CLI (testing): `go run tools/cli/main.go [file]`
 
 ## Project Structure
 ```
-/cmd/seq2b     - Main application entry point
+/desktop/wails     - Desktop GUI application (the main product)
+/pkg/parser        - Shared parsing library
 /internal
-  /parser          - Markdown parsing logic
-  /storage         - Persistence layer (future)
-  /sync            - Git/JJ integration (future)
-  /security        - Code signing, plugin verification (future)
-  /ai              - AI provider interfaces (future)
+  /storage         - Persistence layer (BadgerDB cache)
+/tools             - Internal development tools
+  /cli             - Testing CLI (formerly cmd/seq2b)
+  /cache-demo      - Cache demonstration
+  /benchmark       - Performance testing
+/scripts           - Build and utility scripts
+/bin               - Production binaries (git-ignored)
 /testdata          - Test markdown files
 ```
 
@@ -82,17 +88,17 @@ When committing and pushing with jj:
 - [ ] Step 1.3: Parse basic markdown (bold, italic, links)
 
 ## Next Tasks
-See PROJECT_PLAN.md for detailed task list and progress tracking.
+See project-docs/PROJECT_PLAN.md for detailed task list and progress tracking.
 
 ## Response Formatting
 - Always end responses with actual model information in backticks for subtle formatting (use the real model that generated the response, not a hardcoded string)
 - Do not start responses with model information
 
 ## Writing Guidelines
-- When writing blog posts or content, reference voice.md for tone and style guidelines
+- When writing blog posts or content, reference project-docs/voice.md for tone and style guidelines
 
 ## Code Overview and Explanation Guidelines
-See EXPLANATION.md for detailed guidelines on:
+See project-docs/EXPLANATION.md for detailed guidelines on:
 - Code overview format (Driver and Delegation level)
 - One-page chunks to avoid scrolling
 - Always including filenames above code snippets
@@ -124,3 +130,16 @@ This ensures:
 
 ADRs help maintain a clear history of architectural decisions and their reasoning.
 See `/docs/adr/template.md` for the standard format.
+
+## Design Principles
+
+### Avoid Magic Solutions
+**Prefer explicit scripts over hidden configuration.** If something happens automatically, there should be a clear, visible mechanism showing how it works.
+
+Examples:
+- ✅ Good: A build script that explicitly copies binaries to `bin/`
+- ❌ Bad: Hidden configuration that magically places files somewhere
+- ✅ Good: Clear file paths and operations in scripts
+- ❌ Bad: Buried configuration in tool-specific files
+
+This principle ensures maintainability and reduces confusion for new contributors.

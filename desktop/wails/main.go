@@ -25,6 +25,7 @@ package main
 import (
 	"embed"
 	"flag"
+	"os"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -37,11 +38,22 @@ var assets embed.FS
 func main() {
 	// Parse command line flags
 	testMode := flag.Bool("test-mode", false, "Enable test mode for output capture")
+	libraryPath := flag.String("library", "", "Path to the library directory (required)")
 	flag.Parse()
+
+	// Check if library path is provided
+	// Note: During wails build, the app is run to generate bindings, so we need to allow empty library path
+	if *libraryPath == "" && os.Getenv("SEQ2B_BUILD_MODE") == "" {
+		println("Error: -library parameter is required")
+		println("Usage: seq2b -library /path/to/library")
+		flag.PrintDefaults()
+		return
+	}
 
 	// Create an instance of the app structure
 	app := NewApp()
 	app.TestMode = *testMode
+	app.LibraryPath = *libraryPath
 
 	// Create application with options
 	err := wails.Run(&options.App{

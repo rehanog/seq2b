@@ -45,6 +45,7 @@ type App struct {
 	backlinks *parser.BacklinkIndex
 	currentDir string
 	TestMode bool // Enable output capture for testing
+	LibraryPath string // Path to the library directory
 }
 
 // NewApp creates a new App application struct
@@ -63,10 +64,23 @@ func (a *App) startup(ctx context.Context) {
 	// Initialize test capture if enabled
 	a.InitTestCapture()
 	
-	// Load default directory - look for testdata in parent directories
-	defaultDir := "../../testdata/library_test_0/pages"
-	if absDir, err := filepath.Abs(defaultDir); err == nil {
-		a.LoadDirectory(absDir)
+	// Check for library path from command line or environment variable
+	libraryPath := a.LibraryPath
+	if libraryPath == "" {
+		// In dev mode, wails doesn't pass command line args, so check env var
+		libraryPath = os.Getenv("SEQ2B_LIBRARY_PATH")
+	}
+	
+	// Load the specified library directory
+	if libraryPath != "" {
+		if absDir, err := filepath.Abs(libraryPath); err == nil {
+			fmt.Printf("Loading library from: %s\n", absDir)
+			a.LoadDirectory(absDir)
+		} else {
+			fmt.Printf("Error loading library path: %v\n", err)
+		}
+	} else {
+		fmt.Println("Warning: No library path specified")
 	}
 }
 
@@ -77,12 +91,19 @@ func (a *App) LoadDirectory(dirPath string) error {
 		// Store the library root (parent of pages)
 		a.currentDir = filepath.Dir(dirPath)
 		// But parse the pages directory
-		result, err := parser.ParseDirectory(dirPath)
+		result, err := parser.ParseDirectoryWithCache(dirPath)
 		if err != nil {
 			return fmt.Errorf("error parsing directory: %w", err)
 		}
 		a.pages = result.Pages
 		a.backlinks = result.Backlinks
+		
+		// Build case-insensitive lookup map
+		a.pageNameMap = make(map[string]string)
+		for pageName := range a.pages {
+			a.pageNameMap[strings.ToLower(pageName)] = pageName
+		}
+		
 		return nil
 	}
 	
@@ -99,6 +120,13 @@ func (a *App) LoadDirectory(dirPath string) error {
 		}
 		a.pages = result.Pages
 		a.backlinks = result.Backlinks
+		
+		// Build case-insensitive lookup map
+		a.pageNameMap = make(map[string]string)
+		for pageName := range a.pages {
+			a.pageNameMap[strings.ToLower(pageName)] = pageName
+		}
+		
 		return nil
 	}
 	

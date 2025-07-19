@@ -23,11 +23,14 @@
 package parser
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+	
+	"github.com/rehanog/seq2b/internal/storage"
 )
 
 // ParseResult represents the result of parsing a file
@@ -145,6 +148,145 @@ func ParseDirectory(dirPath string) (*MultiPageResult, error) {
 	}
 	
 	return result, nil
+}
+
+// ParseDirectoryWithCache parses a directory using cache for unchanged files
+func ParseDirectoryWithCache(dirPath string) (*MultiPageResult, error) {
+	result := &MultiPageResult{
+		Pages:     make(map[string]*Page),
+		Backlinks: NewBacklinkIndex(),
+		Errors:    []error{},
+	}
+	
+	// Initialize cache
+	cache, err := storage.NewCacheManager(dirPath)
+	if err != nil {
+		// Fall back to regular parsing if cache fails
+		return ParseDirectory(dirPath)
+	}
+	defer cache.Close()
+	
+	// Validate cache
+	valid, err := cache.ValidateCache()
+	if err != nil {
+		fmt.Printf("Cache validation error: %v\n", err)
+		valid = false
+	}
+	if !valid {
+		fmt.Println("Cache invalid, clearing and rebuilding...")
+		cache.Clear()
+		cache.SaveMetadata()
+	} else {
+		fmt.Println("Cache is valid, using cached data...")
+	}
+	
+	// Find all markdown files
+	files, err := filepath.Glob(filepath.Join(dirPath, "*.md"))
+	if err != nil {
+		return nil, fmt.Errorf("error finding files: %w", err)
+	}
+	
+	cacheHits := 0
+	cacheMisses := 0
+	startTime := time.Now()
+	
+	// Parse each file
+	for _, filePath := range files {
+		// Extract page name from filename
+		baseName := filepath.Base(filePath)
+		pageName := baseName[:len(baseName)-3] // Remove .md extension
+		
+		// Try cache first
+		if valid {
+			cachedPage, hit, err := cache.GetPage(pageName, filePath)
+			if err != nil && err.Error() != "Key not found" {
+				fmt.Printf("Cache get error for %s: %v\n", pageName, err)
+			}
+			if hit {
+				// Unmarshal the raw JSON into a Page
+				if rawJSON, ok := cachedPage.(json.RawMessage); ok {
+					var page Page
+					if err := json.Unmarshal(rawJSON, &page); err == nil {
+						cacheHits++
+						result.Pages[page.Title] = &page
+						result.Backlinks.AddPage(&page)
+						continue
+					} else {
+						fmt.Printf("Cache unmarshal error for %s: %v\n", pageName, err)
+					}
+				} else {
+					fmt.Printf("Cache type assertion failed for %s (got %T)\n", pageName, cachedPage)
+				}
+			}
+		}
+		
+		// Cache miss - parse the file
+		cacheMisses++
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			result.Errors = append(result.Errors, 
+				fmt.Errorf("error reading %s: %w", filePath, err))
+			continue
+		}
+		
+		// Parse the file
+		parseResult, err := ParseFile(string(content))
+		if err != nil {
+			result.Errors = append(result.Errors,
+				fmt.Errorf("error parsing %s: %w", filePath, err))
+			continue
+		}
+		
+		// Store the page
+		page := parseResult.Page
+		result.Pages[page.Title] = page
+		
+		// Extract dependencies
+		var dependencies []string
+		for _, block := range page.Blocks {
+			extractBlockDependencies(block, &dependencies)
+		}
+		
+		// Save to cache
+		if err := cache.SavePage(page, pageName, filePath, dependencies); err != nil {
+			// Log but don't fail
+			result.Errors = append(result.Errors,
+				fmt.Errorf("warning: failed to cache %s: %w", pageName, err))
+		}
+		
+		// Add to backlink index
+		result.Backlinks.AddPage(page)
+	}
+	
+	// Save backlinks to cache
+	for pageName := range result.Pages {
+		backlinks := result.Backlinks.GetBacklinks(pageName)
+		if backlinks != nil && len(backlinks) > 0 {
+			if err := cache.SaveBacklinks(pageName, backlinks); err != nil {
+				// Log but don't fail
+				result.Errors = append(result.Errors,
+					fmt.Errorf("warning: failed to cache backlinks for %s: %w", pageName, err))
+			}
+		}
+	}
+	
+	elapsed := time.Since(startTime)
+	fmt.Printf("Parsed %d files in %v (cache hits: %d, misses: %d)\n", 
+		len(files), elapsed, cacheHits, cacheMisses)
+	
+	return result, nil
+}
+
+// extractBlockDependencies recursively extracts all links from a block
+func extractBlockDependencies(block *Block, dependencies *[]string) {
+	for _, segment := range block.Segments {
+		if segment.Type == SegmentLink && segment.Target != "" {
+			*dependencies = append(*dependencies, segment.Target)
+		}
+	}
+	for _, child := range block.Children {
+		extractBlockDependencies(child, dependencies)
+	}
 }
 
 // ParseFiles parses specific markdown files

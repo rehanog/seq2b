@@ -1,4 +1,5 @@
 # Binaries
+bin/
 hello
 go-hello-world
 seq2b
@@ -47,4 +48,11 @@ Thumbs.db
 /logs/
 *.log
 tmp/
-voice.md
+
+# Cache directories
+cache/
+*/cache/
+demo-library/
+
+# Test vaults
+test-vault-*/

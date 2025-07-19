@@ -13,7 +13,7 @@ A high-performance, cross-platform knowledge management system built in Go, insp
 - **📱 Mobile-Ready Architecture**: Structured for future iOS/Android apps
 - **🖥️ Native Desktop GUI**: Built with Wails for native feel
 - **🎯 Clean Block Hierarchy**: Proper visual indentation for nested blocks
-- **🔍 CLI Tool**: Command-line interface for automation and testing
+- **💾 Persistent Cache**: BadgerDB-powered cache for instant startup
 
 ## 🎯 Project Goals
 
@@ -38,71 +38,60 @@ A high-performance, cross-platform knowledge management system built in Go, insp
 git clone https://github.com/rehanog/seq2b.git
 cd seq2b
 
-# Run the CLI tool
-go run cmd/seq2b/main.go testdata/pages
+# Build the desktop app
+./scripts/build_seq2b.sh
 
-# Run the desktop GUI
-cd desktop/wails
-wails dev
+# Run the desktop app
+# macOS: open bin/seq2b.app
+# Linux: ./bin/seq2b
+# Windows: bin\seq2b.exe
 ```
 
-### Building
+### Development
 
 ```bash
-# Build CLI tool
-go build -o seq2b-cli cmd/seq2b/main.go
-
-# Build desktop app
+# Run in development mode with hot reload
 cd desktop/wails
-wails build
+wails dev
+
+# Run tests
+go test ./...
+
+# Run the testing CLI
+go run tools/cli/main.go testdata/library_test_0/pages
 ```
 
 ## 📖 Usage
 
-### CLI Tool
+### Desktop Application
 
-Perfect for testing and automation:
-
-```bash
-# Parse a single file
-./seq2b-cli path/to/file.md
-
-# Parse a directory
-./seq2b-cli path/to/pages/
-
-# Output includes:
-# - Block structure and hierarchy
-# - Backlink analysis
-# - Orphan page detection
-```
-
-### Desktop GUI
-
-1. Launch the application
-2. Navigate between pages by clicking [[page links]]
-3. Use the back button or press Escape to go back
-4. View backlinks in the sidebar
-5. Enjoy proper block indentation!
+1. Build the app with `./scripts/build_seq2b.sh`
+2. Launch from the `bin/` directory
+3. Navigate between pages by clicking [[page links]]
+4. Use the back button or press Escape to go back
+5. View backlinks in the sidebar
+6. Enjoy proper block indentation and instant loading!
 
 ## 🏗️ Architecture
 
 ```
 seq2b/
-├── pkg/parser/          # Shared parsing library
-├── cmd/seq2b/          # CLI tool
-├── desktop/wails/      # Desktop GUI
-├── mobile/             # Future mobile apps
-│   ├── ios/
-│   └── android/
-└── testdata/           # Sample Logseq files
+├── desktop/wails/      # Desktop GUI application
+├── pkg/parser/         # Shared parsing library
+├── internal/storage/   # Cache and persistence
+├── tools/              # Development tools
+│   ├── cli/           # Testing CLI
+│   └── benchmark/     # Performance tests
+├── scripts/           # Build scripts
+└── bin/               # Production binaries
 ```
 
 ### Key Components
 
 - **Parser**: Logseq-compatible markdown parser with block support
-- **Backlinks**: Automatic bidirectional link detection
+- **Cache**: BadgerDB-powered persistent cache for instant startup
 - **GUI**: Web-based UI in native window (Wails)
-- **CLI**: Command-line interface for scripting
+- **Backlinks**: Automatic bidirectional link detection
 
 ## 🛠️ Development
 
