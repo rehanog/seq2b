@@ -196,67 +196,135 @@ Complete the minimum viable daily driver with:
 - Image embedding for visual notes
 - Combined with existing features (blocks, backlinks, TODOs, editing)
 
-### Phase 5: Persistent Storage Layer
-- [ ] Design efficient storage format (BadgerDB/BoltDB)
-- [ ] Write unit tests for storage interface
-- [ ] Implement indexing for fast queries
-- [ ] Write unit tests for indexing
-- [ ] Create caching layer for performance
-- [ ] Write unit tests for caching
-- [ ] Add write-ahead logging for data integrity
-- [ ] Write integration tests for storage pipeline
+### Phase 5: Logseq-like Page Structure 🚧 IN PROGRESS
+**Goal**: Make the UI more closely match Logseq's page layout and interaction patterns
 
-### Phase 6: Git/JJ Sync System
+#### Step 5.1: Move Backlinks to Page Bottom
+- [ ] Remove separate backlinks sidebar
+- [ ] Add "Linked References" section at bottom of page
+- [ ] Style with subtle separator (not bordered box)
+- [ ] Show source page and block context
+- [ ] Make references clickable for navigation
+
+#### Step 5.2: Add Unlinked References
+- [ ] Search for text mentions of current page name
+- [ ] Display unlinked mentions below linked references
+- [ ] Add ability to convert unlinked to linked
+- [ ] Optimize search performance for large vaults
+
+#### Step 5.3: Page Properties Display
+- [ ] Parse page-level properties (tags::, alias::, etc.)
+- [ ] Display properties at top of page
+- [ ] Support both YAML frontmatter and key:: value syntax
+- [ ] Make properties editable
+
+#### Step 5.4: Enhanced Block Rendering
+- [ ] Add collapse/expand for blocks with children
+- [ ] Show block reference count indicators
+- [ ] Improve visual hierarchy for deep nesting
+- [ ] Add block actions menu (on hover)
+
+### Phase 6: Logseq Markdown Compatibility Audit
+**Goal**: Document and implement missing Logseq markdown features
+
+#### Step 6.1: Compatibility Assessment
+- [ ] Create comprehensive feature matrix
+- [ ] Test against real Logseq markdown files
+- [ ] Document differences and limitations
+- [ ] Prioritize missing features by usage
+
+#### Step 6.2: Block References & Embeds
+- [ ] Generate block IDs on demand (id:: UUID)
+- [ ] Parse ((block-id)) references
+- [ ] Implement block embedding/transclusion
+- [ ] Add {{embed ((id))}} syntax
+- [ ] Add {{embed [[page]]}} for page embeds
+
+#### Step 6.3: Tags and Properties
+- [ ] Parse #tag syntax inline
+- [ ] Support tag pages and tag queries
+- [ ] Parse block properties (key:: value)
+- [ ] Support scheduled:: and deadline:: properties
+- [ ] Add alias:: for page aliases
+
+#### Step 6.4: Basic Queries
+- [ ] Implement {{query}} block syntax
+- [ ] Support simple TODO queries
+- [ ] Add tag-based queries
+- [ ] Basic AND/OR query logic
+- [ ] Query result rendering
+
+### Phase 7: Persistence & Performance
+**Goal**: Quick startup without full reparse + performance benchmarks
+
+#### Step 7.1: Parsed Data Cache
+- [ ] Design cache schema for parsed pages
+- [ ] Implement with BadgerDB/BoltDB
+- [ ] Compare file timestamps on startup
+- [ ] Only reparse modified files
+- [ ] Handle cache invalidation
+
+#### Step 7.2: Performance Benchmarking
+- [ ] Create test vault generator (1000+ pages)
+- [ ] Benchmark cold startup time
+- [ ] Benchmark warm startup (with cache)
+- [ ] Measure page navigation speed
+- [ ] Add regression test suite
+
+#### Step 7.3: Lazy Loading Implementation
+- [ ] Parse pages on first access
+- [ ] Background parsing queue
+- [ ] Progress indicator for parsing
+- [ ] Prioritize recent/pinned pages
+- [ ] Memory usage optimization
+
+### Phase 8: PDF Integration
+**Goal**: View and annotate PDFs within seq2b
+
+#### Step 8.1: PDF Viewing
+- [ ] Integrate PDF.js or native viewer
+- [ ] Support [[pdf-file.pdf]] links
+- [ ] Page number references [[pdf.pdf#page=5]]
+- [ ] Zoom and navigation controls
+
+#### Step 8.2: PDF Annotations
+- [ ] Highlight text in PDFs
+- [ ] Add margin notes
+- [ ] Export annotations as blocks
+- [ ] Link blocks to PDF locations
+- [ ] Search PDF text content
+
+### Phase 9: Git/JJ Sync System
 - [ ] Implement git integration with go-git
-- [ ] Write unit tests for git operations
 - [ ] Add jujutsu (jj) support
-- [ ] Write unit tests for jj operations
-- [ ] Create conflict resolution system
-- [ ] Write unit tests for conflict resolution
-- [ ] Implement mobile sync protocol
-- [ ] Write integration tests for sync pipeline
+- [ ] Create conflict resolution UI
+- [ ] Auto-commit on changes
+- [ ] Sync status indicators
+- [ ] Handle merge conflicts gracefully
 
-### Phase 7: Security Implementation
-- [ ] Set up code signing for binaries
-- [ ] Write tests for signature verification
-- [ ] Design plugin verification system
-- [ ] Write unit tests for plugin verification
-- [ ] Implement plugin sandboxing with WASM
-- [ ] Write security tests for WASM sandbox
-- [ ] Create capability-based permissions
-- [ ] Write unit tests for permission system
+### Phase 10: Plugin System & Security
+- [ ] Design plugin API surface
+- [ ] WASM sandbox implementation
+- [ ] Plugin marketplace/registry
+- [ ] Code signing for plugins
+- [ ] Capability-based permissions
+- [ ] Plugin settings management
 
-### Phase 8: AI Integration
-- [ ] Design AI provider interface
-- [ ] Write unit tests for AI interface
-- [ ] Implement local LLM support (Ollama/llama.cpp)
-- [ ] Write unit tests for LLM integration
-- [ ] Add semantic search with embeddings
-- [ ] Write unit tests for embedding system
-- [ ] Create AI-powered linking suggestions
-- [ ] Write integration tests for AI features
+### Phase 11: AI Integration
+- [ ] Provider-agnostic AI interface
+- [ ] Local LLM support (Ollama)
+- [ ] Cloud provider integration
+- [ ] Smart linking suggestions
+- [ ] Semantic search with embeddings
+- [ ] AI-powered block completion
 
-### Phase 9: API & CLI
-- [ ] Create REST/gRPC API for extensions
-- [ ] Write API unit tests
-- [ ] Write API integration tests
-- [ ] Implement comprehensive CLI
-- [ ] Write CLI unit tests
-- [ ] Write CLI integration tests
-- [ ] Optional: Minimal web UI for remote access
-- [ ] Write web UI tests
-
-### Phase 10: Performance & Scalability
-- [ ] Implement lazy loading for large vaults
-  - [ ] Parse files on-demand instead of all at startup
-  - [ ] Cache parsed pages with TTL
-  - [ ] Background parsing with progress indicator
-- [ ] Add progressive loading UI
-  - [ ] Show interface immediately
-  - [ ] Load pages as they're parsed
-  - [ ] Display parsing progress
-- [ ] Optimize for vaults with 1000+ files
-- [ ] Add performance benchmarks
+### Phase 12: Mobile & API
+- [ ] iOS app with shared Go core
+- [ ] Android app development
+- [ ] REST API for third-party apps
+- [ ] Sync protocol for mobile
+- [ ] Offline-first architecture
+- [ ] WebDAV support
 
 ## Technical Decisions
 

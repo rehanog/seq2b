@@ -136,7 +136,8 @@ function findBlockByPath(path) {
 const pageTitle = document.getElementById('pageTitle');
 const backButton = document.getElementById('backButton');
 const blocksContainer = document.getElementById('blocks');
-const backlinksContainer = document.getElementById('backlinksList');
+const linkedReferencesContainer = document.getElementById('linkedReferencesList');
+const unlinkedReferencesContainer = document.getElementById('unlinkedReferencesList');
 const loadingDiv = document.getElementById('loading');
 
 // Initialize the application
@@ -162,7 +163,8 @@ async function loadPage(pageName) {
     try {
         loadingDiv.style.display = 'block';
         blocksContainer.innerHTML = '';
-        backlinksContainer.innerHTML = '';
+        linkedReferencesContainer.innerHTML = '';
+        unlinkedReferencesContainer.innerHTML = '';
         
         // Update navigation BEFORE loading (so it works even if page is auto-created)
         if (currentPage !== pageName) {
@@ -181,8 +183,11 @@ async function loadPage(pageName) {
         // Render blocks
         renderBlocks(pageData.blocks, blocksContainer);
         
-        // Render backlinks
-        renderBacklinks(pageData.backlinks);
+        // Render linked references
+        renderLinkedReferences(pageData.backlinks);
+        
+        // Show/hide references sections based on content
+        updateReferencesSectionVisibility();
         
         loadingDiv.style.display = 'none';
         
@@ -736,29 +741,74 @@ async function goToToday() {
     loadPage(todayPageName);
 }
 
-// Render backlinks
-function renderBacklinks(backlinks) {
+// Render linked references
+function renderLinkedReferences(backlinks) {
+    const container = document.getElementById('linkedReferences');
+    
     if (!backlinks || backlinks.length === 0) {
-        backlinksContainer.innerHTML = '<div class="empty-state">No backlinks found</div>';
+        linkedReferencesContainer.innerHTML = '<div class="empty-state">No linked references</div>';
+        container.style.display = 'none';
         return;
     }
     
+    container.style.display = 'block';
+    
     backlinks.forEach(backlink => {
-        const backlinkDiv = document.createElement('div');
-        backlinkDiv.className = 'backlink-item';
+        const referenceDiv = document.createElement('div');
+        referenceDiv.className = 'reference-item';
         
         const sourceDiv = document.createElement('div');
-        sourceDiv.className = 'backlink-source';
+        sourceDiv.className = 'reference-source';
         sourceDiv.textContent = backlink.sourcePage;
         sourceDiv.onclick = () => navigateToPage(backlink.sourcePage);
         
-        const blocksDiv = document.createElement('div');
-        blocksDiv.className = 'backlink-blocks';
-        blocksDiv.textContent = `Referenced in: ${backlink.blockIds.join(', ')}`;
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'reference-content';
+        // TODO: In future, show actual block content with context
+        contentDiv.textContent = `${backlink.blockIds.length} reference${backlink.blockIds.length > 1 ? 's' : ''}`;
         
-        backlinkDiv.appendChild(sourceDiv);
-        backlinkDiv.appendChild(blocksDiv);
-        backlinksContainer.appendChild(backlinkDiv);
+        referenceDiv.appendChild(sourceDiv);
+        referenceDiv.appendChild(contentDiv);
+        linkedReferencesContainer.appendChild(referenceDiv);
+    });
+}
+
+// Update references section visibility
+function updateReferencesSectionVisibility() {
+    const referencesSection = document.getElementById('references');
+    
+    // Show references section only if there are any references
+    const hasLinkedRefs = linkedReferencesContainer.children.length > 0 && 
+                         !linkedReferencesContainer.querySelector('.empty-state');
+    const hasUnlinkedRefs = unlinkedReferencesContainer.children.length > 0;
+    
+    if (hasLinkedRefs || hasUnlinkedRefs) {
+        referencesSection.style.display = 'block';
+        setupReferenceCollapsible();
+    } else {
+        referencesSection.style.display = 'none';
+    }
+}
+
+// Setup collapsible references sections
+function setupReferenceCollapsible() {
+    const headers = document.querySelectorAll('.references-header');
+    headers.forEach(header => {
+        // Remove any existing click handlers
+        const newHeader = header.cloneNode(true);
+        header.parentNode.replaceChild(newHeader, header);
+        
+        newHeader.style.cursor = 'pointer';
+        newHeader.onclick = function() {
+            const section = this.parentElement;
+            section.classList.toggle('collapsed');
+            const content = section.querySelector('[id$="List"]');
+            if (section.classList.contains('collapsed')) {
+                content.style.display = 'none';
+            } else {
+                content.style.display = 'block';
+            }
+        };
     });
 }
 

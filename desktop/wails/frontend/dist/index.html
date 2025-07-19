@@ -5,8 +5,8 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>seq2b</title>
     
-  <script type="module" crossorigin src="/assets/index.9820d138.js"></script>
-  <link rel="stylesheet" href="/assets/index.14efcd65.css">
+  <script type="module" crossorigin src="/assets/index.d2a0461a.js"></script>
+  <link rel="stylesheet" href="/assets/index.30e11c8d.css">
 </head>
 <body>
     <div id="app">
@@ -22,11 +22,19 @@
             <div id="pageContent">
                 <div id="loading">Loading page...</div>
                 <div id="blocks"></div>
-            </div>
-            
-            <div id="backlinks">
-                <h3>Backlinks</h3>
-                <div id="backlinksList"></div>
+                
+                <!-- References section at bottom of page -->
+                <div id="references">
+                    <div id="linkedReferences" class="references-section">
+                        <h3 class="references-header">Linked References</h3>
+                        <div id="linkedReferencesList"></div>
+                    </div>
+                    
+                    <div id="unlinkedReferences" class="references-section" style="display: none;">
+                        <h3 class="references-header">Unlinked References</h3>
+                        <div id="unlinkedReferencesList"></div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>

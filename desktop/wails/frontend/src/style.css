@@ -76,19 +76,18 @@ header {
 /* Main content */
 main {
     flex: 1;
-    display: flex;
     padding: 2rem;
-    gap: 2rem;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 #pageContent {
-    flex: 1;
     background: white;
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    overflow-y: auto;
+    max-width: 900px;
+    margin: 0 auto;
 }
 
 /* Block styles */
@@ -221,46 +220,74 @@ main {
     text-decoration: underline;
 }
 
-/* Backlinks sidebar */
-#backlinks {
-    width: 300px;
-    background: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    overflow-y: auto;
+/* References sections */
+#references {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e5e5e5;
 }
 
-#backlinks h3 {
-    margin-bottom: 1rem;
-    color: #2c3e50;
-    font-size: 1.2rem;
+.references-section {
+    margin-bottom: 2rem;
 }
 
-.backlink-item {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.backlink-item:last-child {
-    border-bottom: none;
-}
-
-.backlink-source {
+.references-header {
+    font-size: 0.95rem;
     font-weight: 500;
-    color: #007aff;
+    color: #8a8a8a;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    user-select: none;
+}
+
+.references-header::before {
+    content: '▶';
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+    color: #999;
+}
+
+.references-section.collapsed .references-header::before {
+    transform: rotate(-90deg);
+}
+
+#linkedReferencesList,
+#unlinkedReferencesList {
+    margin-left: 1.5rem;
+}
+
+.reference-item {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0;
+}
+
+.reference-source {
+    font-weight: 500;
+    color: #045591;
     cursor: pointer;
     margin-bottom: 0.25rem;
-}
-
-.backlink-source:hover {
-    text-decoration: underline;
-}
-
-.backlink-blocks {
     font-size: 0.9rem;
+    display: inline-block;
+}
+
+.reference-source:hover {
+    text-decoration: underline;
+    color: #0066cc;
+}
+
+.reference-content {
+    font-size: 0.85rem;
     color: #666;
-    margin-left: 1rem;
+    line-height: 1.6;
+    padding-left: 1rem;
+}
+
+.reference-content .highlight {
+    background-color: rgba(255, 220, 0, 0.3);
+    padding: 1px 3px;
+    border-radius: 2px;
 }
 
 /* Loading state */
@@ -339,13 +366,11 @@ main {
 /* Responsive design */
 @media (max-width: 768px) {
     main {
-        flex-direction: column;
         padding: 1rem;
     }
     
-    #backlinks {
-        width: 100%;
-        margin-top: 1rem;
+    #pageContent {
+        padding: 1rem;
     }
     
     .toolbar {
@@ -355,17 +380,22 @@ main {
     #pageTitle {
         font-size: 1.3rem;
     }
+    
+    #references {
+        margin-top: 2rem;
+        padding-top: 1rem;
+    }
 }
 
 /* Smooth transitions */
-.block, .page-link, .backlink-source {
+.block, .page-link, .reference-source {
     transition: all 0.2s ease;
 }
 
 /* Focus styles for accessibility */
 .back-btn:focus,
 .page-link:focus,
-.backlink-source:focus {
+.reference-source:focus {
     outline: 2px solid #007aff;
     outline-offset: 2px;
 }
