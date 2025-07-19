@@ -106,6 +106,8 @@ func ParseMarkdownSegments(text string) []Segment {
 		`[a-zA-Z][a-zA-Z0-9\-_]*::\s*[^\n]+|` + // property:: value
 		`\*\*.*?\*\*|` +                         // **bold**
 		`\*[^*]+?\*|` +                          // *italic*
+		`\[([^\]]+)\]\(\[\[([^\]]+)\]\]\)|` +   // [text]([[page]]) - named page link
+		`\[([^\]]+)\]\(([^)]+)\)|` +            // [text](url) - markdown link  
 		`\[\[.*?\]\]|` +                         // [[page link]]
 		`!\[.*?\]\(.*?\)` +                      // ![image](url)
 		`)`)
@@ -212,6 +214,26 @@ func ParseMarkdownSegments(text string) []Segment {
 				Type:    SegmentItalic,
 				Content: content,
 			})
+		case strings.HasPrefix(match, "[") && strings.Contains(match, "]([[") && strings.HasSuffix(match, "]])"):
+			// Named page link: [text]([[page]])
+			namedLinkPattern := regexp.MustCompile(`\[([^\]]+)\]\(\[\[([^\]]+)\]\]\)`)
+			if matches := namedLinkPattern.FindStringSubmatch(match); len(matches) == 3 {
+				segments = append(segments, Segment{
+					Type:    SegmentLink,
+					Content: matches[1], // Display text
+					Target:  matches[2], // Page name
+				})
+			}
+		case strings.HasPrefix(match, "[") && strings.Contains(match, "](") && strings.HasSuffix(match, ")") && !strings.HasPrefix(match, "!["):
+			// Markdown link: [text](url)
+			linkPattern := regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
+			if matches := linkPattern.FindStringSubmatch(match); len(matches) == 3 {
+				segments = append(segments, Segment{
+					Type:    SegmentLink,
+					Content: matches[1], // Display text
+					Target:  matches[2], // URL or path
+				})
+			}
 		case strings.HasPrefix(match, "[[") && strings.HasSuffix(match, "]]"):
 			// Link
 			target := match[2 : len(match)-2]

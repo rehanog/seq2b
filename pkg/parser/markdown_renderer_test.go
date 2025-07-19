@@ -123,6 +123,22 @@ func TestParseMarkdownSegments(t *testing.T) {
 				{Type: SegmentLink, Content: "Page C", Target: "Page C"},
 			},
 		},
+		{
+			name:  "PDF link",
+			input: "Check this [[../assets/document.pdf]]",
+			expected: []Segment{
+				{Type: SegmentText, Content: "Check this "},
+				{Type: SegmentLink, Content: "../assets/document.pdf", Target: "../assets/document.pdf"},
+			},
+		},
+		{
+			name:  "External PDF link",
+			input: "External PDF: [[https://example.com/file.pdf]]",
+			expected: []Segment{
+				{Type: SegmentText, Content: "External PDF: "},
+				{Type: SegmentLink, Content: "https://example.com/file.pdf", Target: "https://example.com/file.pdf"},
+			},
+		},
 	}
 
 	for _, tt := range tests {

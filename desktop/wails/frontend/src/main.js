@@ -201,7 +201,13 @@ async function loadPage(pageName) {
         }
         
         // Load any assets that need the GetAsset API
-        await loadAssets();
+        // Add small delay to ensure DOM is fully rendered
+        console.log('Scheduling loadAssets call...');
+        setTimeout(async () => {
+            console.log('Calling loadAssets now...');
+            await loadAssets();
+            console.log('loadAssets completed');
+        }, 10);
         
         // Capture DOM and navigation history in test mode
         await captureCurrentDOM();
@@ -228,33 +234,35 @@ async function loadPage(pageName) {
 // Load assets that need the GetAsset API
 async function loadAssets() {
     const assetImages = document.querySelectorAll('img[data-asset-path]');
+    console.log('loadAssets: Found', assetImages.length, 'images with data-asset-path');
     
     for (const img of assetImages) {
         const assetPath = img.getAttribute('data-asset-path');
         if (assetPath) {
+            // GetAsset expects path to include 'assets/' prefix
+            const fullAssetPath = assetPath.startsWith('assets/') ? assetPath : 'assets/' + assetPath;
+            
             try {
-                // If GetAsset is available, use it
-                if (typeof GetAsset === 'function') {
-                    const assetData = await GetAsset(assetPath);
-                    
-                    // If it's SVG (text), create a data URL
-                    if (assetPath.endsWith('.svg')) {
-                        img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(assetData);
-                    } else {
-                        // For other formats, assume it's already a data URL from backend
-                        img.src = assetData;
-                    }
-                    
-                    img.classList.remove('loading-asset');
-                    img.removeAttribute('data-asset-path');
+                console.log('Loading asset:', fullAssetPath);
+                const assetData = await GetAsset(fullAssetPath);
+                console.log('Asset data received:', assetData ? assetData.substring(0, 100) + '...' : 'null');
+                
+                // If it's SVG (text), create a data URL
+                if (assetPath.endsWith('.svg')) {
+                    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(assetData);
                 } else {
-                    // Fallback if GetAsset is not available
-                    console.warn('GetAsset not available, image will not load:', assetPath);
+                    // For other formats, assume it's already a data URL from backend
+                    img.src = assetData;
                 }
+                
+                img.classList.remove('loading-asset');
+                img.removeAttribute('data-asset-path');
             } catch (err) {
-                console.error('Failed to load asset:', assetPath, err);
+                console.error('Failed to load asset:', fullAssetPath, err);
+                console.error('Error details:', err.message || err);
                 img.alt = img.alt + ' (failed to load)';
                 img.classList.add('failed-asset');
+                img.classList.remove('loading-asset');
             }
         }
     }
@@ -343,6 +351,11 @@ function createBlockElement(block) {
     
     // Use segments if available, otherwise fall back to htmlContent
     if (block.segments && block.segments.length > 0) {
+        // Debug log for image blocks
+        if (block.content && block.content.includes('![')) {
+            console.log('Block with image:', block.content);
+            console.log('Segments:', block.segments);
+        }
         textDiv.innerHTML = renderSegmentsToHTML(block.segments);
     } else if (block.htmlContent) {
         textDiv.innerHTML = processLinksInHTML(block.htmlContent);
@@ -420,8 +433,8 @@ function createBlockElement(block) {
             return;
         }
         
-        // Check if click was on a link
-        const link = e.target.closest('.page-link');
+        // Check if click was on a link (either page link or PDF link)
+        const link = e.target.closest('.page-link, .pdf-link');
         if (link) {
             // Let the link handle the click, don't enter edit mode
             e.stopPropagation();
@@ -587,15 +600,29 @@ function renderSegmentsToHTML(segments) {
             case 'italic':
                 return `<i>${escapeHtml(segment.content)}</i>`;
             case 'link':
-                return `<a href="#" class="page-link" onclick="navigateToPage('${escapeHtml(segment.target)}')">${escapeHtml(segment.content)}</a>`;
+                // Check if this is a PDF link
+                if (segment.target && (segment.target.toLowerCase().endsWith('.pdf') || segment.content.toLowerCase().endsWith('.pdf'))) {
+                    console.log('Rendering PDF link:', segment.target);
+                    return `<a href="#" class="pdf-link" onclick="openPDF('${escapeHtml(segment.target)}'); return false;">${escapeHtml(segment.content)}</a>`;
+                } else {
+                    return `<a href="#" class="page-link" onclick="navigateToPage('${escapeHtml(segment.target)}'); return false;">${escapeHtml(segment.content)}</a>`;
+                }
             case 'image':
+                console.log('Processing image segment:', segment.target, 'content:', segment.content);
+                // Check if this is actually a PDF (Logseq uses image syntax for PDFs)
+                if (segment.target && segment.target.toLowerCase().endsWith('.pdf')) {
+                    console.log('Rendering PDF as image syntax:', segment.target);
+                    return `<a href="#" class="pdf-link" onclick="openPDF('${escapeHtml(segment.target)}'); return false;">${escapeHtml(segment.content || segment.alt || 'PDF')}</a>`;
+                }
                 // Check if this is a relative asset path
-                if (segment.target && segment.target.startsWith('../assets/')) {
+                else if (segment.target && segment.target.startsWith('../assets/')) {
                     // Transform to use asset loading
                     const assetPath = segment.target.substring('../assets/'.length);
+                    console.log('Rendering as asset image:', assetPath);
                     return `<img data-asset-path="${escapeHtml(assetPath)}" alt="${escapeHtml(segment.alt || segment.content)}" class="embedded-image loading-asset">`;
                 } else {
                     // Regular image (absolute URL or other path)
+                    console.log('Rendering as regular image:', segment.target);
                     return `<img src="${escapeHtml(segment.target)}" alt="${escapeHtml(segment.alt || segment.content)}" class="embedded-image">`;
                 }
             case 'tag':
@@ -678,6 +705,142 @@ function parseMarkdownToSegments(text) {
     }
     
     return segments.length > 0 ? segments : [{type: 'text', content: text}];
+}
+
+// PDF Viewer functionality
+let currentPDF = null;
+let sidebarResizer = null;
+
+window.openPDF = async function(pdfPath) {
+    console.log('Opening PDF:', pdfPath);
+    
+    const sidebar = document.getElementById('rightSidebar');
+    const resizeHandle = document.getElementById('resizeHandle');
+    const iframe = document.getElementById('pdfFrame');
+    const titleSpan = document.querySelector('.sidebar-title');
+    const toggleBtn = document.getElementById('toggleSidebar');
+    
+    // Store current PDF path
+    currentPDF = pdfPath;
+    
+    // Update title
+    titleSpan.textContent = pdfPath.split('/').pop();
+    
+    try {
+        // Check if it's a relative path (../assets/ or similar)
+        if (pdfPath.startsWith('../')) {
+            // Use GetAsset to load the PDF
+            const assetPath = pdfPath.substring(3); // Remove ../
+            const base64Data = await GetAsset(assetPath);
+            
+            // The backend now returns complete data URLs for PDFs
+            iframe.src = base64Data;
+        } else {
+            // For absolute paths or URLs, load directly
+            iframe.src = pdfPath;
+        }
+        
+        // Show the sidebar and resize handle
+        sidebar.style.display = 'flex';
+        resizeHandle.style.display = 'block';
+        toggleBtn.style.display = 'block';
+        toggleBtn.textContent = '⬅ Hide Sidebar';
+        
+        // Log PDF open action
+        await logAction(`Opened PDF: ${pdfPath}`);
+    } catch (error) {
+        console.error('Error loading PDF:', error);
+        alert(`Failed to load PDF: ${error.message}`);
+    }
+}
+
+// Setup PDF sidebar controls
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('rightSidebar');
+    const resizeHandle = document.getElementById('resizeHandle');
+    const closeBtn = document.getElementById('sidebarClose');
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const mainContainer = document.getElementById('mainContainer');
+    
+    // Close button
+    closeBtn.addEventListener('click', function() {
+        closeSidebar();
+    });
+    
+    // Toggle button
+    toggleBtn.addEventListener('click', function() {
+        if (sidebar.style.display === 'none') {
+            // Show sidebar
+            sidebar.style.display = 'flex';
+            resizeHandle.style.display = 'block';
+            toggleBtn.textContent = '⬅ Hide Sidebar';
+        } else {
+            // Hide sidebar temporarily
+            sidebar.style.display = 'none';
+            resizeHandle.style.display = 'none';
+            toggleBtn.textContent = '➡ Show Sidebar';
+        }
+    });
+    
+    // Escape key to close
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && sidebar.style.display === 'flex') {
+            // Only close if not editing
+            if (!document.querySelector('.block-text.editing')) {
+                closeSidebar();
+            }
+        }
+    });
+    
+    // Resize functionality
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+    
+    resizeHandle.addEventListener('mousedown', function(e) {
+        isResizing = true;
+        startX = e.pageX;
+        startWidth = sidebar.offsetWidth;
+        document.body.style.cursor = 'ew-resize';
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+        
+        const currentX = e.pageX;
+        const diff = startX - currentX;
+        const newWidth = startWidth + diff;
+        
+        // Limit sidebar width between 200px and 80% of container
+        const minWidth = 200;
+        const maxWidth = mainContainer.offsetWidth * 0.8;
+        
+        if (newWidth >= minWidth && newWidth <= maxWidth) {
+            sidebar.style.width = newWidth + 'px';
+        }
+    });
+    
+    document.addEventListener('mouseup', function() {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.cursor = '';
+        }
+    });
+});
+
+// Close sidebar helper
+function closeSidebar() {
+    const sidebar = document.getElementById('rightSidebar');
+    const resizeHandle = document.getElementById('resizeHandle');
+    const iframe = document.getElementById('pdfFrame');
+    const toggleBtn = document.getElementById('toggleSidebar');
+    
+    sidebar.style.display = 'none';
+    resizeHandle.style.display = 'none';
+    toggleBtn.style.display = 'none';
+    iframe.src = ''; // Clear the iframe
+    currentPDF = null;
 }
 
 // Navigate to a page

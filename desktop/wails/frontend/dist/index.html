@@ -5,8 +5,8 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>seq2b</title>
     
-  <script type="module" crossorigin src="/assets/index.d2a0461a.js"></script>
-  <link rel="stylesheet" href="/assets/index.30e11c8d.css">
+  <script type="module" crossorigin src="/assets/index.9ee96fe2.js"></script>
+  <link rel="stylesheet" href="/assets/index.d47fd0a2.css">
 </head>
 <body>
     <div id="app">
@@ -15,28 +15,45 @@
                 <button id="backButton" class="back-btn" disabled>← Back</button>
                 <button id="homeButton" class="home-btn">🏠 Today</button>
                 <h1 id="pageTitle">Loading...</h1>
+                <button id="toggleSidebar" class="sidebar-toggle-btn" style="display: none;">⬅ Hide Sidebar</button>
             </div>
         </header>
         
-        <main id="content">
-            <div id="pageContent">
-                <div id="loading">Loading page...</div>
-                <div id="blocks"></div>
-                
-                <!-- References section at bottom of page -->
-                <div id="references">
-                    <div id="linkedReferences" class="references-section">
-                        <h3 class="references-header">Linked References</h3>
-                        <div id="linkedReferencesList"></div>
-                    </div>
+        <div id="mainContainer">
+            <main id="content">
+                <div id="pageContent">
+                    <div id="loading">Loading page...</div>
+                    <div id="blocks"></div>
                     
-                    <div id="unlinkedReferences" class="references-section" style="display: none;">
-                        <h3 class="references-header">Unlinked References</h3>
-                        <div id="unlinkedReferencesList"></div>
+                    <!-- References section at bottom of page -->
+                    <div id="references">
+                        <div id="linkedReferences" class="references-section">
+                            <h3 class="references-header">Linked References</h3>
+                            <div id="linkedReferencesList"></div>
+                        </div>
+                        
+                        <div id="unlinkedReferences" class="references-section" style="display: none;">
+                            <h3 class="references-header">Unlinked References</h3>
+                            <div id="unlinkedReferencesList"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </main>
+            </main>
+            
+            <!-- Resizable handle -->
+            <div id="resizeHandle" class="resize-handle" style="display: none;"></div>
+            
+            <!-- Right Sidebar (for PDFs and future features) -->
+            <aside id="rightSidebar" class="right-sidebar" style="display: none;">
+                <div class="sidebar-header">
+                    <span class="sidebar-title"></span>
+                    <button id="sidebarClose" class="sidebar-close-btn">✕</button>
+                </div>
+                <div class="sidebar-content">
+                    <iframe id="pdfFrame" class="pdf-iframe"></iframe>
+                </div>
+            </aside>
+        </div>
     </div>
     
     

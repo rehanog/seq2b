@@ -72,8 +72,37 @@ func (a *App) startup(ctx context.Context) {
 
 // LoadDirectory loads all markdown files from a directory
 func (a *App) LoadDirectory(dirPath string) error {
+	// Check if this is a pages subdirectory or library root
+	if filepath.Base(dirPath) == "pages" {
+		// Store the library root (parent of pages)
+		a.currentDir = filepath.Dir(dirPath)
+		// But parse the pages directory
+		result, err := parser.ParseDirectory(dirPath)
+		if err != nil {
+			return fmt.Errorf("error parsing directory: %w", err)
+		}
+		a.pages = result.Pages
+		a.backlinks = result.Backlinks
+		return nil
+	}
+	
+	// Otherwise assume it's the library root
 	a.currentDir = dirPath
 	
+	// Check if there's a pages subdirectory
+	pagesDir := filepath.Join(dirPath, "pages")
+	if info, err := os.Stat(pagesDir); err == nil && info.IsDir() {
+		// Parse the pages subdirectory
+		result, err := parser.ParseDirectory(pagesDir)
+		if err != nil {
+			return fmt.Errorf("error parsing directory: %w", err)
+		}
+		a.pages = result.Pages
+		a.backlinks = result.Backlinks
+		return nil
+	}
+	
+	// Fall back to parsing the directory itself
 	result, err := parser.ParseDirectory(dirPath)
 	if err != nil {
 		return fmt.Errorf("error parsing directory: %w", err)
@@ -871,21 +900,25 @@ func (a *App) GetAsset(assetPath string) (string, error) {
 		return "", fmt.Errorf("invalid asset path")
 	}
 	
-	// Construct full path - assets are siblings to pages directory
-	assetsDir := filepath.Join(filepath.Dir(a.currentDir), "assets")
-	fullPath := filepath.Join(assetsDir, assetPath)
+	// Construct full path - assets are in the library directory
+	fullPath := filepath.Join(a.currentDir, assetPath)
 	
-	// Verify the path is still within the assets directory
+	// Verify the path is still within the library directory
 	absPath, err := filepath.Abs(fullPath)
 	if err != nil {
 		return "", err
 	}
-	absAssetsDir, err := filepath.Abs(assetsDir)
+	absLibDir, err := filepath.Abs(a.currentDir)
 	if err != nil {
 		return "", err
 	}
-	if !strings.HasPrefix(absPath, absAssetsDir) {
-		return "", fmt.Errorf("invalid asset path: outside assets directory")
+	if !strings.HasPrefix(absPath, absLibDir) {
+		return "", fmt.Errorf("invalid asset path: outside library directory")
+	}
+	
+	// Also verify it's in the assets subdirectory
+	if !strings.HasPrefix(assetPath, "assets/") {
+		return "", fmt.Errorf("asset path must start with assets/")
 	}
 	
 	// Read the file
@@ -899,7 +932,7 @@ func (a *App) GetAsset(assetPath string) (string, error) {
 		return string(data), nil
 	}
 	
-	// For binary images, encode as base64 data URL
+	// For binary files, encode as base64 data URL
 	mimeType := "application/octet-stream"
 	switch {
 	case strings.HasSuffix(assetPath, ".png"):
@@ -910,6 +943,8 @@ func (a *App) GetAsset(assetPath string) (string, error) {
 		mimeType = "image/gif"
 	case strings.HasSuffix(assetPath, ".webp"):
 		mimeType = "image/webp"
+	case strings.HasSuffix(assetPath, ".pdf"):
+		mimeType = "application/pdf"
 	}
 	
 	return fmt.Sprintf("data:%s;base64,%s", mimeType, base64.StdEncoding.EncodeToString(data)), nil
