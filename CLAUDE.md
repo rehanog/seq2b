@@ -124,6 +124,17 @@ This ensures:
 - Implementing TDD workflow
 This agent has specialized tools for Go testing and ensures tests are properly written and executed.
 
+## Agent Memory Boundaries
+**IMPORTANT**: Each specialized agent maintains its own persistent memory in `.claude/agent/[agent-name]/`.
+Memory segregation rules:
+- **DO NOT** read or modify other agents' persistent memory files
+- **DO NOT** access files in `.claude/agent/` directories other than your own
+- Each agent should **ONLY** access its own memory at `.claude/agent/[agent-name]/persistent_memory.md`
+- When using the Task tool to launch agents, they will handle their own memory automatically
+
+Current agent directories:
+- `.claude/agent/bug-investigator/` - Testing and bug investigation agent memory
+
 ## Architecture Decision Records (ADRs)
 **IMPORTANT**: Before making any major architectural changes or design decisions:
 1. **Create an ADR** in `/docs/adr/` following the template
