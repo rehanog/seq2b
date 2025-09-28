@@ -170,6 +170,26 @@ main {
     min-width: 1.2rem;
 }
 
+.collapse-toggle {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    color: #999;
+    font-size: 10px;
+    transition: all 0.2s;
+    margin-right: 2px;
+}
+
+.collapse-toggle:hover {
+    color: #333;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+}
+
 .block-bullet {
     width: 8px;
     height: 8px;
@@ -185,6 +205,11 @@ main {
 .block-bullet:hover {
     background-color: #999;
     transform: scale(1.2);
+}
+
+/* Collapsed state - hide children */
+.block.collapsed > .block-children {
+    display: none;
 }
 
 .block-text {
@@ -254,10 +279,11 @@ main {
     font-size: 0.7rem;
     transition: transform 0.2s;
     color: #999;
+    transform: rotate(90deg);  /* Start pointing down when expanded */
 }
 
 .references-section.collapsed .references-header::before {
-    transform: rotate(-90deg);
+    transform: rotate(0deg);  /* Point right when collapsed */
 }
 
 #linkedReferencesList,
@@ -303,6 +329,43 @@ main {
     padding: 2rem;
     color: #666;
     font-style: italic;
+}
+
+/* Page properties */
+.page-properties {
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    display: none; /* Hidden by default */
+}
+
+.page-properties.has-properties {
+    display: block;
+}
+
+.property-item {
+    display: flex;
+    align-items: baseline;
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+}
+
+.property-key {
+    font-weight: 500;
+    color: #6c757d;
+    margin-right: 0.5rem;
+    min-width: 80px;
+}
+
+.property-key::after {
+    content: '::';
+    margin-left: 2px;
+}
+
+.property-value {
+    color: #495057;
+    flex: 1;
 }
 
 /* Empty states */

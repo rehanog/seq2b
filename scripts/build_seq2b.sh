@@ -74,5 +74,9 @@ echo ""
 echo "Build complete! 🎉"
 echo ""
 echo "To run seq2b:"
-echo "  ./scripts/run_seq2b.sh         # Run with test library"
-echo "  ./bin/seq2b -library /path     # Run with custom library"
+echo "  ./scripts/run_seq2b.sh                             # Run with test library"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "  ./bin/seq2b.app/Contents/MacOS/seq2b -library /path  # Run with custom library"
+else
+    echo "  ./bin/seq2b -library /path                           # Run with custom library"
+fi

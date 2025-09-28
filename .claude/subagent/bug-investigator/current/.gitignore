@@ -1,0 +1,33 @@
+# Temporary investigation files
+*.tmp
+*.log
+*.prof
+*.test
+*.out
+
+# Coverage files
+*.cover
+coverage.html
+
+# Debug outputs
+debug_*
+trace_*
+
+# Heap dumps
+*.heap
+*.allocs
+
+# Test binaries
+test_*
+
+# Scratch files
+scratch.*
+temp_*
+
+# IDE specific
+.idea/
+.vscode/
+
+# OS specific
+.DS_Store
+Thumbs.db

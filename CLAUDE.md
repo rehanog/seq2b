@@ -116,6 +116,14 @@ This ensures:
 - The fix actually solves the problem
 - We have regression test coverage
 
+## Testing Guidelines
+**IMPORTANT**: Always use the `bug-investigator-tester-go` agent when:
+- Writing new tests
+- Running tests
+- Debugging test failures
+- Implementing TDD workflow
+This agent has specialized tools for Go testing and ensures tests are properly written and executed.
+
 ## Architecture Decision Records (ADRs)
 **IMPORTANT**: Before making any major architectural changes or design decisions:
 1. **Create an ADR** in `/docs/adr/` following the template

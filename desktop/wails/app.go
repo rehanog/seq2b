@@ -44,6 +44,7 @@ type App struct {
 	pageNameMap map[string]string // lowercase -> actual case mapping
 	backlinks *parser.BacklinkIndex
 	currentDir string
+	pagesDir string // Directory where pages are stored
 	TestMode bool // Enable output capture for testing
 	LibraryPath string // Path to the library directory
 }
@@ -90,6 +91,7 @@ func (a *App) LoadDirectory(dirPath string) error {
 	if filepath.Base(dirPath) == "pages" {
 		// Store the library root (parent of pages)
 		a.currentDir = filepath.Dir(dirPath)
+		a.pagesDir = dirPath
 		// But parse the pages directory
 		result, err := parser.ParseDirectoryWithCache(dirPath)
 		if err != nil {
@@ -113,6 +115,7 @@ func (a *App) LoadDirectory(dirPath string) error {
 	// Check if there's a pages subdirectory
 	pagesDir := filepath.Join(dirPath, "pages")
 	if info, err := os.Stat(pagesDir); err == nil && info.IsDir() {
+		a.pagesDir = pagesDir
 		// Parse the pages subdirectory
 		result, err := parser.ParseDirectory(pagesDir)
 		if err != nil {
@@ -131,6 +134,7 @@ func (a *App) LoadDirectory(dirPath string) error {
 	}
 	
 	// Fall back to parsing the directory itself
+	a.pagesDir = dirPath
 	result, err := parser.ParseDirectory(dirPath)
 	if err != nil {
 		return fmt.Errorf("error parsing directory: %w", err)
@@ -150,6 +154,23 @@ func (a *App) LoadDirectory(dirPath string) error {
 
 // RefreshPages reloads all pages from the current directory
 func (a *App) RefreshPages() error {
+	if a.pagesDir != "" {
+		// If we have a specific pages directory, parse that
+		result, err := parser.ParseDirectoryWithCache(a.pagesDir)
+		if err != nil {
+			return fmt.Errorf("error parsing directory: %w", err)
+		}
+		a.pages = result.Pages
+		a.backlinks = result.Backlinks
+		
+		// Rebuild case-insensitive lookup map
+		a.pageNameMap = make(map[string]string)
+		for pageName := range a.pages {
+			a.pageNameMap[strings.ToLower(pageName)] = pageName
+		}
+		return nil
+	}
+	
 	if a.currentDir == "" {
 		return fmt.Errorf("no directory loaded")
 	}
@@ -210,11 +231,18 @@ func (a *App) GetPage(pageName string) (*PageData, error) {
 	// Get backlinks for this page (use actual page name for correct lookup)
 	backlinks := a.backlinks.GetBacklinks(page.Title)
 	
+	// Collect page-level properties from all blocks
+	pageProperties := make(map[string]string)
+	for _, block := range page.Blocks {
+		collectPageProperties(block, pageProperties)
+	}
+	
 	result := &PageData{
 		Name: pageName,
 		Title: page.Title,
 		Blocks: convertBlocks(page.Blocks),
 		Backlinks: convertBacklinks(backlinks),
+		Properties: pageProperties,
 	}
 	
 	// Log API call if in test mode
@@ -269,6 +297,7 @@ type PageData struct {
 	Title string `json:"title"`
 	Blocks []BlockData `json:"blocks"`
 	Backlinks []BacklinkData `json:"backlinks"`
+	Properties map[string]string `json:"properties"`
 }
 
 // SegmentData represents a text segment for frontend
@@ -290,6 +319,7 @@ type BlockData struct {
 	TodoState string `json:"todoState"`
 	CheckboxState string `json:"checkboxState"`
 	Priority string `json:"priority"`
+	Properties map[string]string `json:"properties"`
 }
 
 // BacklinkData represents backlink data for frontend
@@ -297,6 +327,16 @@ type BacklinkData struct {
 	SourcePage string `json:"sourcePage"`
 	BlockIDs []string `json:"blockIds"`
 	Count int `json:"count"`
+}
+
+// collectPageProperties collects properties from top-level blocks
+func collectPageProperties(block *parser.Block, pageProperties map[string]string) {
+	// Only collect properties from blocks at depth 0
+	if block.Depth == 0 {
+		for k, v := range block.Properties {
+			pageProperties[k] = v
+		}
+	}
 }
 
 // Helper functions to convert internal types to frontend types
@@ -313,6 +353,7 @@ func convertBlocks(blocks []*parser.Block) []BlockData {
 			TodoState: string(block.TodoInfo.TodoState),
 			CheckboxState: string(block.TodoInfo.CheckboxState),
 			Priority: block.TodoInfo.Priority,
+			Properties: block.Properties,
 		}
 	}
 	return result
@@ -523,7 +564,12 @@ func (a *App) savePage(page *parser.Page) error {
 		filename = parser.TitleToFilename(page.Title)
 	}
 	
-	filePath := filepath.Join(a.currentDir, filename)
+	// Use pagesDir if available, otherwise currentDir
+	dir := a.pagesDir
+	if dir == "" {
+		dir = a.currentDir
+	}
+	filePath := filepath.Join(dir, filename)
 	
 	// Write to file
 	return os.WriteFile(filePath, []byte(content), 0644)
@@ -575,7 +621,12 @@ func (a *App) blocksToMarkdown(blocks []*parser.Block, lines *[]string, depth in
 func (a *App) createPage(pageTitle string) error {
 	// Generate the filename
 	filename := parser.TitleToFilename(pageTitle)
-	filePath := filepath.Join(a.currentDir, filename)
+	// Use pagesDir if available, otherwise currentDir
+	dir := a.pagesDir
+	if dir == "" {
+		dir = a.currentDir
+	}
+	filePath := filepath.Join(dir, filename)
 	
 	// Check if file already exists
 	if _, err := os.Stat(filePath); err == nil {
@@ -613,7 +664,12 @@ func (a *App) createDatePage(dateTitle string) error {
 	
 	// Generate the filename
 	filename := parser.GetDatePageFilename(date)
-	filePath := filepath.Join(a.currentDir, filename)
+	// Use pagesDir if available, otherwise currentDir
+	dir := a.pagesDir
+	if dir == "" {
+		dir = a.currentDir
+	}
+	filePath := filepath.Join(dir, filename)
 	
 	// Check if file already exists
 	if _, err := os.Stat(filePath); err == nil {

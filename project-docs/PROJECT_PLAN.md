@@ -407,6 +407,7 @@ These are the absolute minimum features required for existing Logseq users to mi
 2. **Phase 7: Persistence & Performance** - Must handle large vaults (10,000+ pages) without stuttering
 3. **Local Git Versioning** - Auto-commit changes locally (without sync) for version history
 4. **Block collapse/expand** (Phase 5.3) - Core navigation feature users expect
+5. **Page Rename with Link Updates** - CRITICAL: Must update all [[links]] across all pages when renaming
 
 Non-critical but expected:
 - Page properties (Phase 5.2) - Nice for organization but not blocking

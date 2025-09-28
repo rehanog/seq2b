@@ -31,7 +31,7 @@ The desktop app is the primary seq2b application that end users will use.
 ./scripts/run_seq2b.sh
 
 # Run with your own library
-./bin/seq2b -library /path/to/your/library
+./bin/seq2b.app/Contents/MacOS/seq2b -library /path/to/your/library
 ```
 
 ### Production Build
@@ -40,11 +40,14 @@ The desktop app is the primary seq2b application that end users will use.
 ./scripts/build_seq2b.sh
 
 # The binary will be available at:
-# macOS: bin/seq2b.app
+# macOS: bin/seq2b.app (run with: ./bin/seq2b.app/Contents/MacOS/seq2b)
 # Linux: bin/seq2b
 # Windows: bin/seq2b.exe
 
 # Run with a library (required parameter)
+# macOS:
+./bin/seq2b.app/Contents/MacOS/seq2b -library /path/to/library
+# Linux/Windows:
 ./bin/seq2b -library /path/to/library
 ```
 

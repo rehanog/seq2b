@@ -166,6 +166,11 @@ async function loadPage(pageName) {
         linkedReferencesContainer.innerHTML = '';
         unlinkedReferencesContainer.innerHTML = '';
         
+        // Clear properties
+        const propertiesContainer = document.getElementById('pageProperties');
+        propertiesContainer.innerHTML = '';
+        propertiesContainer.classList.remove('has-properties');
+        
         // Update navigation BEFORE loading (so it works even if page is auto-created)
         if (currentPage !== pageName) {
             navigationHistory.push(currentPage);
@@ -180,8 +185,14 @@ async function loadPage(pageName) {
         // Update page title
         pageTitle.textContent = pageData.title;
         
+        // Render page properties
+        renderPageProperties(pageData.properties);
+        
         // Render blocks
         renderBlocks(pageData.blocks, blocksContainer);
+        
+        // Load any asset images
+        await loadAssets();
         
         // Render linked references
         renderLinkedReferences(pageData.backlinks);
@@ -301,6 +312,53 @@ function renderBlocks(blocks, container) {
     });
 }
 
+// Count all children recursively
+function countAllChildren(block) {
+    let count = 0;
+    if (block.children) {
+        count = block.children.length;
+        block.children.forEach(child => {
+            count += countAllChildren(child);
+        });
+    }
+    return count;
+}
+
+// Toggle all children blocks recursively
+function toggleAllChildren(blockElement, collapse) {
+    const allChildBlocks = blockElement.querySelectorAll('.block-has-children');
+    allChildBlocks.forEach(childBlock => {
+        const toggle = childBlock.querySelector('.collapse-toggle');
+        const blockId = childBlock.getAttribute('data-block-id');
+        const collapseKey = `collapsed_${currentPage}_${blockId}`;
+        
+        if (collapse) {
+            childBlock.classList.add('collapsed');
+            if (toggle) toggle.innerHTML = '▶';
+            localStorage.setItem(collapseKey, 'true');
+        } else {
+            childBlock.classList.remove('collapsed');
+            if (toggle) toggle.innerHTML = '▼';
+            localStorage.removeItem(collapseKey);
+        }
+    });
+    
+    // Also toggle the main block
+    const mainToggle = blockElement.querySelector('.collapse-toggle');
+    const mainBlockId = blockElement.getAttribute('data-block-id');
+    const mainCollapseKey = `collapsed_${currentPage}_${mainBlockId}`;
+    
+    if (collapse) {
+        blockElement.classList.add('collapsed');
+        if (mainToggle) mainToggle.innerHTML = '▶';
+        localStorage.setItem(mainCollapseKey, 'true');
+    } else {
+        blockElement.classList.remove('collapsed');
+        if (mainToggle) mainToggle.innerHTML = '▼';
+        localStorage.removeItem(mainCollapseKey);
+    }
+}
+
 // Create a block element
 function createBlockElement(block) {
     const blockDiv = document.createElement('div');
@@ -315,6 +373,45 @@ function createBlockElement(block) {
     // Create a consistent prefix element with bullet always visible
     const prefixDiv = document.createElement('div');
     prefixDiv.className = 'block-prefix';
+    
+    // Add collapse/expand toggle for blocks with children
+    if (block.children && block.children.length > 0) {
+        const collapseToggle = document.createElement('div');
+        collapseToggle.className = 'collapse-toggle';
+        collapseToggle.innerHTML = '▼'; // Down arrow when expanded
+        collapseToggle.title = 'Click to collapse/expand';
+        
+        // Check if this block should be collapsed from localStorage
+        const collapseKey = `collapsed_${currentPage}_${block.id}`;
+        const isCollapsed = localStorage.getItem(collapseKey) === 'true';
+        
+        if (isCollapsed) {
+            blockDiv.classList.add('collapsed');
+            collapseToggle.innerHTML = '▶'; // Right arrow when collapsed
+        }
+        
+        collapseToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isCurrentlyCollapsed = blockDiv.classList.contains('collapsed');
+            
+            // Alt+Click to toggle all children recursively
+            if (e.altKey) {
+                toggleAllChildren(blockDiv, !isCurrentlyCollapsed);
+            } else {
+                if (isCurrentlyCollapsed) {
+                    blockDiv.classList.remove('collapsed');
+                    collapseToggle.innerHTML = '▼';
+                    localStorage.removeItem(collapseKey);
+                } else {
+                    blockDiv.classList.add('collapsed');
+                    collapseToggle.innerHTML = '▶';
+                    localStorage.setItem(collapseKey, 'true');
+                }
+            }
+        });
+        
+        prefixDiv.appendChild(collapseToggle);
+    }
     
     // Always show bullet as a circle
     const bullet = document.createElement('div');
@@ -419,6 +516,8 @@ function createBlockElement(block) {
                 const segments = parseMarkdownToSegments(this.getAttribute('data-raw-content'));
                 this.innerHTML = renderSegmentsToHTML(segments);
             }
+            // Load any asset images
+            await loadAssets();
         }
         
         this.dataset.saving = 'false';
@@ -528,6 +627,9 @@ async function saveBlockEdit(pageName, blockId, newContent, textDiv) {
                 // Last resort: use the raw content
                 textDiv.innerHTML = escapeHtml(newContent);
             }
+            
+            // Load any new asset images
+            await loadAssets();
             
             // Update TODO/checkbox state if changed
             if (updatedBlock.todoState !== undefined || updatedBlock.checkboxState !== undefined) {
@@ -918,6 +1020,36 @@ async function goToToday() {
     const todayPageName = getTodayPageName();
     // Navigate to today's page
     loadPage(todayPageName);
+}
+
+// Render page properties
+function renderPageProperties(properties) {
+    const container = document.getElementById('pageProperties');
+    
+    if (!properties || Object.keys(properties).length === 0) {
+        return;
+    }
+    
+    // Show the container
+    container.classList.add('has-properties');
+    
+    // Render each property
+    for (const [key, value] of Object.entries(properties)) {
+        const propertyItem = document.createElement('div');
+        propertyItem.className = 'property-item';
+        
+        const keyElement = document.createElement('span');
+        keyElement.className = 'property-key';
+        keyElement.textContent = key;
+        
+        const valueElement = document.createElement('span');
+        valueElement.className = 'property-value';
+        valueElement.textContent = value;
+        
+        propertyItem.appendChild(keyElement);
+        propertyItem.appendChild(valueElement);
+        container.appendChild(propertyItem);
+    }
 }
 
 // Render linked references
@@ -1395,5 +1527,35 @@ document.addEventListener('keydown', (event) => {
         if (!document.querySelector('.block-text.editing')) {
             goBack();
         }
+    }
+    
+    // Cmd/Ctrl + Shift + Left Arrow: Collapse all blocks
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'ArrowLeft') {
+        event.preventDefault();
+        const allBlocks = document.querySelectorAll('.block-has-children');
+        allBlocks.forEach(block => {
+            const toggle = block.querySelector('.collapse-toggle');
+            const blockId = block.getAttribute('data-block-id');
+            const collapseKey = `collapsed_${currentPage}_${blockId}`;
+            
+            block.classList.add('collapsed');
+            if (toggle) toggle.innerHTML = '▶';
+            localStorage.setItem(collapseKey, 'true');
+        });
+    }
+    
+    // Cmd/Ctrl + Shift + Right Arrow: Expand all blocks
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'ArrowRight') {
+        event.preventDefault();
+        const allBlocks = document.querySelectorAll('.block-has-children');
+        allBlocks.forEach(block => {
+            const toggle = block.querySelector('.collapse-toggle');
+            const blockId = block.getAttribute('data-block-id');
+            const collapseKey = `collapsed_${currentPage}_${blockId}`;
+            
+            block.classList.remove('collapsed');
+            if (toggle) toggle.innerHTML = '▼';
+            localStorage.removeItem(collapseKey);
+        });
     }
 });

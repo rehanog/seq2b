@@ -44,6 +44,7 @@ export namespace main {
 	    todoState: string;
 	    checkboxState: string;
 	    priority: string;
+	    properties: Record<string, string>;
 	
 	    static createFrom(source: any = {}) {
 	        return new BlockData(source);
@@ -60,6 +61,7 @@ export namespace main {
 	        this.todoState = source["todoState"];
 	        this.checkboxState = source["checkboxState"];
 	        this.priority = source["priority"];
+	        this.properties = source["properties"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -85,6 +87,7 @@ export namespace main {
 	    title: string;
 	    blocks: BlockData[];
 	    backlinks: BacklinkData[];
+	    properties: Record<string, string>;
 	
 	    static createFrom(source: any = {}) {
 	        return new PageData(source);
@@ -96,6 +99,7 @@ export namespace main {
 	        this.title = source["title"];
 	        this.blocks = this.convertValues(source["blocks"], BlockData);
 	        this.backlinks = this.convertValues(source["backlinks"], BacklinkData);
+	        this.properties = source["properties"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

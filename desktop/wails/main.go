@@ -44,10 +44,20 @@ func main() {
 	// Check if library path is provided
 	// Note: During wails build, the app is run to generate bindings, so we need to allow empty library path
 	if *libraryPath == "" && os.Getenv("SEQ2B_BUILD_MODE") == "" {
-		println("Error: -library parameter is required")
-		println("Usage: seq2b -library /path/to/library")
-		flag.PrintDefaults()
-		return
+		// In development mode, use default test library
+		if os.Getenv("SEQ2B_LIBRARY_PATH") == "" {
+			// Check if we're in development (wails dev sets this)
+			if _, exists := os.LookupEnv("WAILS_VITE_PORT"); exists {
+				// We're in development mode, use test library
+				*libraryPath = "../../testdata/library_test_0"
+				println("Development mode: Using default test library")
+			} else {
+				println("Error: -library parameter is required")
+				println("Usage: seq2b -library /path/to/library")
+				flag.PrintDefaults()
+				return
+			}
+		}
 	}
 
 	// Create an instance of the app structure

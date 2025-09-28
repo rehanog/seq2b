@@ -51,9 +51,10 @@ type Block struct {
 // Page represents a complete Logseq page
 type Page struct {
 	Name        string
-	Title       string    // Page title (usually from first header)
-	Blocks      []*Block  // Ordered top-level blocks
-	AllBlocks   []*Block  // Flat list of all blocks for easy searching
+	Title       string              // Page title (usually from first header)
+	Blocks      []*Block            // Ordered top-level blocks
+	AllBlocks   []*Block            // Flat list of all blocks for easy searching
+	Properties  map[string]string   // Page-level properties (tags::, alias::, etc.)
 	
 	// Metadata
 	Created     time.Time

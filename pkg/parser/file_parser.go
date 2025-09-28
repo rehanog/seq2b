@@ -81,14 +81,18 @@ func ParseFile(content string) (*ParseResult, error) {
 		contexts = append(contexts, parseContext{line, indentLevel})
 	}
 	
-	// Step 2: Build block tree from parsed lines
+	// Step 2: Extract page-level properties
+	pageProperties := extractPageLevelProperties(lines)
+	
+	// Step 3: Build block tree from parsed lines
 	blocks := BuildBlockTree(contexts)
 	
-	// Step 3: Create page with all blocks
+	// Step 4: Create page with all blocks and properties
 	page := &Page{
-		Blocks:    blocks,
-		Created:   time.Now(),
-		Modified:  time.Now(),
+		Blocks:     blocks,
+		Properties: pageProperties,
+		Created:    time.Now(),
+		Modified:   time.Now(),
 	}
 	
 	// Extract title from first header if present
@@ -106,6 +110,78 @@ func ParseFile(content string) (*ParseResult, error) {
 		Page:  page,
 		Lines: lines,
 	}, nil
+}
+
+// extractPageLevelProperties extracts properties that appear at the page level
+// In Logseq, page properties can appear:
+// 1. At the very beginning of the file (before any content)
+// 2. Right after the page title/first header (before any blocks)
+func extractPageLevelProperties(lines []Line) map[string]string {
+	properties := make(map[string]string)
+	headerFound := false
+	afterHeaderProperties := false
+	
+	for _, line := range lines {
+		// Case 1: Properties at beginning (before first header)
+		if !headerFound {
+			if line.Type == TypeHeader {
+				headerFound = true
+				continue
+			}
+			if line.Type == TypeEmpty {
+				continue
+			}
+			if line.Type == TypeBlock {
+				break // Stop at first block
+			}
+			if line.Type == TypeText && len(line.Properties) > 0 {
+				for key, value := range line.Properties {
+					properties[key] = value
+				}
+			}
+			continue
+		}
+		
+		// Case 2: Properties right after first header
+		if headerFound && !afterHeaderProperties {
+			if line.Type == TypeEmpty {
+				continue // Allow empty lines after header
+			}
+			if line.Type == TypeBlock {
+				break // Stop at first block after header
+			}
+			if line.Type == TypeText {
+				if len(line.Properties) > 0 {
+					// Found properties after header
+					afterHeaderProperties = true
+					for key, value := range line.Properties {
+						properties[key] = value
+					}
+				} else {
+					// Non-property text after header - stop looking
+					break
+				}
+			}
+			continue
+		}
+		
+		// Case 3: Continue collecting properties right after header
+		if headerFound && afterHeaderProperties {
+			if line.Type == TypeEmpty {
+				continue // Allow empty lines between properties
+			}
+			if line.Type == TypeText && len(line.Properties) > 0 {
+				for key, value := range line.Properties {
+					properties[key] = value
+				}
+			} else {
+				// Stop at non-property content
+				break
+			}
+		}
+	}
+	
+	return properties
 }
 
 // ParseDirectory parses all markdown files in a directory

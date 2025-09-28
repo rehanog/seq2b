@@ -1,0 +1,3 @@
+- This is a test page for image editing bug
+- Here's an image: ![Test Image](../assets/seq2b-logo.svg)
+- Edit the line above and see if the image still displays after blur
