@@ -653,10 +653,18 @@ async function saveBlockEdit(pageName, blockId, newContent, textDiv) {
 function updateBlockPrefix(blockDiv, blockData) {
     const prefixDiv = blockDiv.querySelector('.block-prefix');
     if (!prefixDiv) return;
-    
-    // Clear existing prefix content except bullet
+
+    // Preserve collapse toggle and bullet
+    const collapseToggle = prefixDiv.querySelector('.collapse-toggle');
     const bullet = prefixDiv.querySelector('.block-bullet');
+
+    // Clear prefix content
     prefixDiv.innerHTML = '';
+
+    // Re-add collapse toggle first (if it exists)
+    if (collapseToggle) prefixDiv.appendChild(collapseToggle);
+
+    // Then add bullet
     if (bullet) prefixDiv.appendChild(bullet);
     
     // Add TODO state or checkbox
@@ -1552,10 +1560,24 @@ document.addEventListener('keydown', (event) => {
             const toggle = block.querySelector('.collapse-toggle');
             const blockId = block.getAttribute('data-block-id');
             const collapseKey = `collapsed_${currentPage}_${blockId}`;
-            
+
             block.classList.remove('collapsed');
             if (toggle) toggle.innerHTML = '▼';
             localStorage.removeItem(collapseKey);
         });
+    }
+
+    // Tab: Toggle collapse/expand for focused block with children
+    if (event.key === 'Tab' && !document.querySelector('.block-text.editing')) {
+        const focusedElement = document.activeElement;
+        const blockDiv = focusedElement?.closest('.block');
+
+        if (blockDiv && blockDiv.classList.contains('block-has-children')) {
+            event.preventDefault();
+            const toggle = blockDiv.querySelector('.collapse-toggle');
+            if (toggle) {
+                toggle.click();
+            }
+        }
     }
 });
